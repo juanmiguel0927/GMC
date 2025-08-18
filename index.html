@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explorador GMC Interactivo</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -49,6 +50,8 @@
             box-shadow: 2px 4px rgba(0, 0, 0, 0.1);
             color: #c9d1d9;
             text-align: center;
+            user-select: none;
+            cursor: pointer;
         }
         .note-circle.selectable {
             cursor: pointer;
@@ -103,11 +106,33 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+        @media (min-width: 1024px) {
+            .pairing-display {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
         .pairing-display .note-group {
             background-color: #0d1117;
             padding: 1rem;
             border-radius: 0.75rem;
             border: 1px solid #30363d;
+        }
+        .play-button {
+            background-color: #059669;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            user-select: none;
+            border: none;
+        }
+        .play-button:hover {
+            background-color: #047857;
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -182,6 +207,32 @@
                 <h3 class="text-sm font-bold mb-1"></h3>
                 <div class="note-display notes"></div>
             </div>
+            <div id="group3" class="note-group">
+                <h3 class="text-sm font-bold mb-1">Grupo 3: Notas aleatorias</h3>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="flex items-center gap-2">
+                        <label for="noteCountSelect" class="text-xs">Número de notas:</label>
+                        <select id="noteCountSelect" class="bg-gray-700 text-white text-xs p-1 w-12 rounded-lg border border-gray-600 text-center">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <label for="rhythmSelect" class="text-xs">Ritmo:</label>
+                        <select id="rhythmSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600 text-center">
+                            <option value="4n">Negras</option>
+                            <option value="8n" selected>Corcheas</option>
+                            <option value="16n">Semicorcheas</option>
+                        </select>
+                        <button id="playGroup3Btn" class="play-button text-xs py-1 px-3 rounded-full">Play</button>
+                    </div>
+                </div>
+                <div class="note-display notes mt-2"></div>
+            </div>
         </div>
 
         <div id="infoMessage" class="mt-4 text-center">
@@ -217,11 +268,11 @@
 
             // This data structure holds all 10 specific pairings provided by the user.
             const allGmcPairings = [
-                // 1. Triada / Triada
+                // 1. Triad / Triad
                 { family1: 'Triad', family2: 'Triad', group1: [0, 2, 4], group2: [1, 3, 5] },
-                // 2. Triada / 7th no 5
+                // 2. Triad / 7th no 5
                 { family1: 'Triad', family2: '7th no 5', group1: [3, 5, 0], group2: [2, 4, 1] },
-                // 3. Triada / 7th no 3
+                // 3. Triad / 7th no 3
                 { family1: 'Triad', family2: '7th no 3', group1: [5, 0, 2], group2: [4, 1, 3] },
                 // 4. Sus4 / Sus4
                 { family1: 'Sus4', family2: 'Sus4', group1: [5, 1, 2], group2: [4, 0, 3] },
@@ -254,13 +305,21 @@
             const pairingDisplay = document.getElementById('pairingDisplay');
             const group1Display = document.getElementById('group1');
             const group2Display = document.getElementById('group2');
+            const group3Display = document.getElementById('group3');
             const group1NotesDiv = group1Display.querySelector('.notes');
             const group2NotesDiv = group2Display.querySelector('.notes');
+            const group3NotesDiv = group3Display.querySelector('.notes');
             const infoMessage = document.getElementById('infoMessage');
             const step2Section = document.getElementById('step2Section');
             const step3Section = document.getElementById('step3Section');
             const rootNoteSpan = document.getElementById('rootNote');
+            const noteCountSelect = document.getElementById('noteCountSelect');
+            const rhythmSelect = document.getElementById('rhythmSelect');
+            const playGroup3Btn = document.getElementById('playGroup3Btn');
 
+            // Initialize Tone.js Synth
+            let synth = new Tone.Synth().toDestination();
+            
             // Application state
             let compressedNotes = [];
             let selectedCustomNotes = [];
@@ -449,15 +508,26 @@
             resetBtn.addEventListener('click', () => {
                 renderApp(modeSelect.value);
             });
+            
+            // Event listener for note count change (new)
+            noteCountSelect.addEventListener('change', () => {
+                shuffleGroup3();
+            });
+
+            // Event listener for play button
+            playGroup3Btn.addEventListener('click', () => {
+                playGroup3Notes();
+            });
 
             // Function to render the pairing visualization based on a selected pairing object
             const renderPairing = (pairing = null) => {
                 group1NotesDiv.innerHTML = '';
                 group2NotesDiv.innerHTML = '';
+                group3NotesDiv.innerHTML = '';
                 pairingDisplay.style.display = 'none';
                 infoMessage.style.display = 'block';
                 infoMessage.innerHTML = `<p class="text-sm text-gray-500">Selecciona una combinación para ver el emparejamiento.</p>`;
-
+                
                 if (pairing && compressedNotes.length === 6) {
                     infoMessage.style.display = 'none';
                     pairingDisplay.style.display = 'grid';
@@ -479,8 +549,55 @@
                         group2NotesDiv.appendChild(noteDiv);
                     });
                     group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
+
+                    // Initial render of group 3
+                    shuffleGroup3();
                 }
             };
+            
+            // Function to shuffle the notes and render Group 3
+            const shuffleGroup3 = () => {
+                group3NotesDiv.innerHTML = '';
+                const allNotes = [...compressedNotes]; // Get all 6 notes
+                const noteCount = parseInt(noteCountSelect.value) || 3;
+                
+                // Shuffle the notes
+                for (let i = allNotes.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allNotes[i], allNotes[j]] = [allNotes[j], allNotes[i]];
+                }
+
+                // Render the selected number of notes and add click sound event
+                const notesToRender = allNotes.slice(0, noteCount);
+                notesToRender.forEach(note => {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
+                    noteDiv.textContent = note;
+                    noteDiv.addEventListener('click', () => {
+                        Tone.start(); // Start Tone.js on user interaction
+                        synth.triggerAttackRelease(note + '4', '8n'); // Play the note in the 4th octave
+                    });
+                    group3NotesDiv.appendChild(noteDiv);
+                });
+            };
+
+            // Function to play all notes in Group 3 sequentially with the selected rhythm
+            const playGroup3Notes = () => {
+                Tone.start(); // Start Tone.js on user interaction
+                const noteElements = Array.from(group3NotesDiv.querySelectorAll('.note-circle'));
+                const rhythm = rhythmSelect.value;
+                const noteDuration = rhythm;
+                let time = Tone.now();
+                
+                noteElements.forEach((noteElement, index) => {
+                    const note = noteElement.textContent;
+                    // Play the note with the selected duration and a slight offset
+                    synth.triggerAttackRelease(note + '4', noteDuration, time);
+                    // Increment the time based on the selected rhythm's duration
+                    time += Tone.Time(noteDuration).toSeconds();
+                });
+            };
+
 
             // Initialize the app with the major scale view
             renderApp(modeSelect.value);
