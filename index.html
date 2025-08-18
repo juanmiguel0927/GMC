@@ -34,15 +34,14 @@
             margin: 0.5rem 0;
         }
         .note-display.horizontal-scroll {
-            flex-wrap: nowrap; /* Prevent wrapping for horizontal layout */
-            overflow-x: auto; /* Add horizontal scroll if needed */
+            flex-wrap: nowrap;
+            overflow-x: auto;
             justify-content: flex-start;
         }
         .note-circle {
             background-color: #21262d;
             border: 2px solid #30363d;
             border-radius: 50%;
-            /* Ajustado el tamaño y la fuente para mejorar la legibilidad */
             width: 2.3rem;
             height: 2.3rem;
             display: flex;
@@ -50,7 +49,7 @@
             flex-shrink: 0;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem; /* Aumentado el tamaño de la fuente */
+            font-size: 0.75rem;
             line-height: 0.8;
             font-weight: bold;
             transition: all 0.2s ease-in-out;
@@ -236,6 +235,10 @@
             <h2 class="font-semibold mb-1">Paso 2: La Escala Comprimida</h2>
             <p class="text-sm text-gray-400">La nota raíz (<span id="rootNote"></span>) ha sido removida, dejando las siguientes notas:</p>
             <div id="compressedNotesDisplay" class="note-display"></div>
+            <!-- Botón para alternar la notación enarmónica -->
+            <button id="toggleEnharmonicBtn" class="bg-gray-600 text-white text-sm py-1 px-3 rounded-full hover:bg-gray-500 transition-colors mt-2">
+                <span id="enharmonicBtnText">Cambiar a Bemoles</span>
+            </button>
         </div>
 
         <!-- NEW Step 3 Section for direct combination selection -->
@@ -308,7 +311,7 @@
                 { sharp: 'A#', flat: 'B♭' },
                 { sharp: 'B', flat: 'B' }
             ];
-
+            
             // Map English note names to their Spanish equivalents
             const scaleNamesSpanish = {
                 'C': 'Do Mayor', 'C#': 'Do# Mayor', 'D': 'Re Mayor', 'D#': 'Re# Mayor',
@@ -363,49 +366,30 @@
                 // 10. 7th no 5 / 7th no 3 (numbers: 253 / 764 -> indices: [0, 3, 1] / [5, 4, 2])
                 { family1: '7th no 5', family2: '7th no 3', group1: [0, 3, 1], group2: [5, 4, 2] }
             ];
-
+            
             // This map contains the correct note orders for open voicing inversions, based on the user's feedback.
             // The key is a string representation of the fundamental triad's indices.
             const openInversionMap = {
-                // Triada / Triada
-                '0,4,2': { fundamental: [0, 4, 2], first: [2, 0, 4], second: [4, 2, 0] }, // DAF (264) -> FDA (426) -> AFD (642)
-                '1,5,3': { fundamental: [1, 5, 3], first: [3, 1, 5], second: [5, 3, 1] }, // EBG (375) -> GEB (537) -> BGE (753)
-                
-                // Triada / 7th no 5
-                '3,0,5': { fundamental: [3, 0, 5], first: [5, 3, 0], second: [0, 5, 3] }, // GDB (527) -> BGD (752) -> DBG (275)
-                '2,1,4': { fundamental: [2, 1, 4], first: [4, 2, 1], second: [1, 4, 2] }, // FEA (436) -> AFE (643) -> EAF (364)
-                
-                // Triada / 7th no 3
-                '5,2,0': { fundamental: [5, 2, 0], first: [0, 5, 2], second: [2, 0, 5] }, // BFD (742) -> DBF (274) -> FDB (427)
-                '4,3,1': { fundamental: [4, 3, 1], first: [1, 4, 3], second: [3, 1, 4] }, // AGE (653) -> EAG (365) -> GEA (536)
-                
-                // Sus4 / Sus4
-                '5,2,1': { fundamental: [5, 2, 1], first: [1, 5, 2], second: [2, 1, 5] }, // BFE (743) -> EBF (374) -> FEB (437)
-                '4,3,0': { fundamental: [4, 3, 0], first: [0, 4, 3], second: [3, 0, 4] }, // AGD (652) -> DAG (265) -> GDA (526)
-                
-                // Sus4 / 7th no 5
-                '4,1,0': { fundamental: [4, 1, 0], first: [0, 4, 1], second: [1, 0, 4] }, // AED (632) -> DAE (263) -> EDA (326)
-                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] }, // GFB (543) -> BGF (354) -> FBG (435)
-                
-                // Sus4 / 7th no 3
-                '1,5,4': { fundamental: [1, 5, 4], first: [4, 1, 5], second: [5, 4, 1] }, // EBA (376) -> AEB (637) -> BAE (763)
-                '2,0,3': { fundamental: [2, 0, 3], first: [3, 2, 0], second: [0, 3, 2] }, // FDG (425) -> GFD (542) -> DGF (254)
-                
-                // Cluster / Cluster
-                '2,1,0': { fundamental: [2, 1, 0], first: [0, 2, 1], second: [1, 0, 2] }, // FED (432) -> DFE (243) -> EDF (324)
-                '4,3,5': { fundamental: [4, 3, 5], first: [5, 4, 3], second: [3, 5, 4] }, // AGB (657) -> BAG (765) -> GBA (576)
-                
-                // Cluster / 7th no 5
-                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] }, // GFE (543) -> EGF (354) -> FEG (435)
-                '5,4,0': { fundamental: [5, 4, 0], first: [0, 5, 4], second: [4, 0, 5] }, // BAD (762) -> DBA (276) -> ADB (627)
-                
-                // Cluster / 7th no 3
-                '2,4,3': { fundamental: [2, 4, 3], first: [3, 2, 4], second: [4, 3, 2] }, // FAG (465) -> GFA (546) -> AGF (654)
-                '0,5,1': { fundamental: [0, 5, 1], first: [1, 0, 5], second: [5, 1, 0] }, // DBE (273) -> EDB (327) -> BED (732)
-                
-                // 7th no 5 / 7th no 3
-                '0,3,1': { fundamental: [0, 3, 1], first: [1, 0, 3], second: [3, 1, 0] }, // DGE (253) -> EDG (325) -> GED (532)
-                '5,4,2': { fundamental: [5, 4, 2], first: [2, 5, 4], second: [4, 2, 5] }, // BAF (764) -> AFB (647) -> FBA (476)
+                '0,4,2': { fundamental: [0, 4, 2], first: [2, 0, 4], second: [4, 2, 0] },
+                '1,5,3': { fundamental: [1, 5, 3], first: [3, 1, 5], second: [5, 3, 1] },
+                '3,0,5': { fundamental: [3, 0, 5], first: [5, 3, 0], second: [0, 5, 3] },
+                '2,1,4': { fundamental: [2, 1, 4], first: [4, 2, 1], second: [1, 4, 2] },
+                '5,2,0': { fundamental: [5, 2, 0], first: [0, 5, 2], second: [2, 0, 5] },
+                '4,3,1': { fundamental: [4, 3, 1], first: [1, 4, 3], second: [3, 1, 4] },
+                '5,2,1': { fundamental: [5, 2, 1], first: [1, 5, 2], second: [2, 1, 5] },
+                '4,3,0': { fundamental: [4, 3, 0], first: [0, 4, 3], second: [3, 0, 4] },
+                '4,1,0': { fundamental: [4, 1, 0], first: [0, 4, 1], second: [1, 0, 4] },
+                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] },
+                '1,5,4': { fundamental: [1, 5, 4], first: [4, 1, 5], second: [5, 4, 1] },
+                '2,0,3': { fundamental: [2, 0, 3], first: [3, 2, 0], second: [0, 3, 2] },
+                '2,1,0': { fundamental: [2, 1, 0], first: [0, 2, 1], second: [1, 0, 2] },
+                '4,3,5': { fundamental: [4, 3, 5], first: [5, 4, 3], second: [3, 5, 4] },
+                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] },
+                '5,4,0': { fundamental: [5, 4, 0], first: [0, 5, 4], second: [4, 0, 5] },
+                '2,4,3': { fundamental: [2, 4, 3], first: [3, 2, 4], second: [4, 3, 2] },
+                '0,5,1': { fundamental: [0, 5, 1], first: [1, 0, 5], second: [5, 1, 0] },
+                '0,3,1': { fundamental: [0, 3, 1], first: [1, 0, 3], second: [3, 1, 0] },
+                '5,4,2': { fundamental: [5, 4, 2], first: [2, 5, 4], second: [4, 2, 5] },
             };
 
             // DOM element references
@@ -436,6 +420,8 @@
             const rhythmSelect = document.getElementById('rhythmSelect');
             const playGroup3Btn = document.getElementById('playGroup3Btn');
             const shuffleGroup3Btn = document.getElementById('shuffleGroup3Btn');
+            const toggleEnharmonicBtn = document.getElementById('toggleEnharmonicBtn');
+            const enharmonicBtnText = document.getElementById('enharmonicBtnText');
 
             // Initialize Tone.js Synth
             let synth = new Tone.Synth().toDestination();
@@ -444,14 +430,58 @@
             let compressedNotes = [];
             let selectedCustomNotes = [];
             let currentGmcPairings = closedGmcPairings;
-            let currentSelectedPairingIndex = 0; // Store the index of the currently selected pairing
+            let currentSelectedPairingIndex = 0;
+            let currentRootNote = 'C';
+            
+            // New state: map to store the current spelling for each canonical note (e.g., C#, D♭, etc.)
+            let noteSpellings = {};
+
+            // Function to find the canonical note name (the sharp version)
+            const findCanonicalNote = (note) => {
+                const noteObj = notesChromatic.find(n => n.sharp === note || n.flat === note);
+                return noteObj ? noteObj.sharp : note;
+            };
+
+            // Function to get the correct enharmonic spelling from the state
+            const getNoteSpelling = (note) => {
+                const canonicalNote = findCanonicalNote(note);
+                return noteSpellings[canonicalNote] || note;
+            };
+
+            // Function to toggle the enharmonic spelling and trigger a re-render
+            const handleNoteEnharmonicClick = (note) => {
+                const canonicalNote = findCanonicalNote(note);
+                const noteObject = notesChromatic.find(n => n.sharp === canonicalNote);
+
+                // Only toggle if the note has an enharmonic equivalent
+                if (noteObject.sharp !== noteObject.flat) {
+                    const currentSpelling = getNoteSpelling(note);
+                    const newSpelling = currentSpelling === noteObject.sharp ? noteObject.flat : noteObject.sharp;
+                    noteSpellings[canonicalNote] = newSpelling;
+                    // Trigger a re-render of the relevant parts
+                    renderAllNotes();
+                }
+            };
+            
+            // Central function to re-render all note display areas
+            const renderAllNotes = () => {
+                 if (modeSelect.value === 'major') {
+                    renderMajorScale(currentRootNote);
+                } else {
+                    updateAppCustom();
+                }
+            };
 
             // Main render function based on the selected mode
             const renderApp = (mode) => {
                 // Reset state
                 selectedCustomNotes = [];
-                currentSelectedPairingIndex = 0; // Reset selected pairing
-                document.querySelectorAll('.note-circle.selectable').forEach(btn => btn.classList.remove('selected'));
+                currentSelectedPairingIndex = 0;
+                // Reset all note spellings to their sharp defaults
+                noteSpellings = {};
+                notesChromatic.forEach(note => {
+                    noteSpellings[note.sharp] = note.sharp;
+                });
                 
                 if (mode === 'major') {
                     majorModeSection.classList.remove('hidden');
@@ -466,14 +496,15 @@
             
             // Function to generate a major scale from a root note
             const generateMajorScale = (rootNote) => {
-                const notesChromaticFlat = notesChromatic.map(n => n.sharp);
-                const rootIndex = notesChromaticFlat.indexOf(rootNote);
+                const notesChromaticSharp = notesChromatic.map(n => n.sharp);
+                const rootIndex = notesChromaticSharp.indexOf(rootNote);
                 const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
-                return scaleSteps.map(step => notesChromaticFlat[(rootIndex + step) % 12]);
+                return scaleSteps.map(step => notesChromaticSharp[(rootIndex + step) % 12]);
             };
 
             // Renders the major scale view
             const renderMajorScale = (rootNote) => {
+                currentRootNote = rootNote;
                 const currentScale = generateMajorScale(rootNote);
                 compressedNotes = currentScale.slice(1);
                 
@@ -486,17 +517,22 @@
                     } else {
                         noteDiv.classList.add('uncompressed');
                     }
-                    noteDiv.textContent = note;
+                    noteDiv.textContent = getNoteSpelling(note);
+                    noteDiv.dataset.note = note; // Store canonical note name
+                    // Add enharmonic click listener only to non-root notes
+                    if (index !== 0) {
+                         noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
+                    }
                     originalNotesDisplay.appendChild(noteDiv);
                 });
                 
                 // Update scale name in text
-                scaleNameSpan.textContent = scaleNamesSpanish[rootNote] || `${rootNote} Mayor`;
+                scaleNameSpan.textContent = scaleNamesSpanish[rootNote] || `${getNoteSpelling(rootNote)} Mayor`;
                 
                 // Show step 2 and 3 sections
                 step2Section.classList.remove('hidden');
                 step3Section.classList.remove('hidden');
-                rootNoteSpan.textContent = rootNote;
+                rootNoteSpan.textContent = getNoteSpelling(rootNote);
                 
                 updateCompressedNotesDisplay();
                 updateCombinationButtonsAndRenderPairing();
@@ -508,64 +544,60 @@
                 notesChromatic.forEach(note => {
                     const noteDiv = document.createElement('div');
                     noteDiv.classList.add('note-circle', 'selectable');
-                    if (note.sharp === note.flat) {
-                        noteDiv.textContent = note.sharp;
-                    } else {
-                        noteDiv.innerHTML = `${note.sharp}<br/>${note.flat}`;
-                    }
+                    // Use a dataset attribute to store the canonical note
+                    noteDiv.dataset.note = note.sharp; 
+                    noteDiv.innerHTML = `${note.sharp}<br/>${note.flat}`;
                     
-                    noteDiv.dataset.sharp = note.sharp;
-                    noteDiv.addEventListener('click', handleCustomNoteSelection);
+                    noteDiv.addEventListener('click', (event) => {
+                        const noteDiv = event.currentTarget;
+                        const note = noteDiv.dataset.note;
+                        
+                        const index = selectedCustomNotes.indexOf(note);
+                        
+                        if (index === -1 && selectedCustomNotes.length < 7) {
+                            // If not selected and there's space, add it
+                            selectedCustomNotes.push(note);
+                            noteDiv.classList.add('selected');
+                        } else if (index > -1) {
+                            // If the note is already selected, remove it
+                            selectedCustomNotes.splice(index, 1);
+                            noteDiv.classList.remove('selected');
+                        }
+                        updateAppCustom();
+                    });
+                    
                     selectableNotesContainer.appendChild(noteDiv);
                 });
                 updateAppCustom();
             };
 
-            // Handle custom note selection click
-            const handleCustomNoteSelection = (event) => {
-                const noteDiv = event.currentTarget;
-                const note = noteDiv.dataset.sharp;
-                const index = selectedCustomNotes.indexOf(note);
-
-                if (index > -1) {
-                    selectedCustomNotes.splice(index, 1);
-                    noteDiv.classList.remove('selected');
-                } else if (selectedCustomNotes.length < 7) {
-                    selectedCustomNotes.push(note);
-                    noteDiv.classList.add('selected');
-                }
-                updateAppCustom();
-            };
-
             // Update the custom scale app logic
             const updateAppCustom = () => {
-                // Do NOT sort selectedCustomNotes to maintain selection order
-                
+                // Set the first selected note as the root and compress the scale
+                if (selectedCustomNotes.length > 0) {
+                    currentRootNote = selectedCustomNotes[0];
+                    rootNoteSpan.textContent = getNoteSpelling(currentRootNote);
+                    compressedNotes = selectedCustomNotes.slice(1);
+                } else {
+                    currentRootNote = null;
+                    compressedNotes = [];
+                }
+
                 if (selectedCustomNotes.length === 7) {
                     selectionMessage.textContent = '¡7 notas seleccionadas!';
                     selectionMessage.classList.remove('text-gray-500');
                     selectionMessage.classList.add('text-green-500');
-
-                    // Set the first selected note as the root and compress the scale
-                    const currentRoot = selectedCustomNotes[0];
-                    rootNoteSpan.textContent = currentRoot;
-                    compressedNotes = selectedCustomNotes.slice(1);
-                    
-                    // Show the next steps
                     step2Section.classList.remove('hidden');
                     step3Section.classList.remove('hidden');
-
                     updateCompressedNotesDisplay();
                     updateCombinationButtonsAndRenderPairing();
-                    
                 } else {
-                    compressedNotes = [];
                     step2Section.classList.add('hidden');
                     step3Section.classList.add('hidden');
                     selectionMessage.textContent = `Selecciona 7 notas en el orden deseado. La primera nota será la raíz. (${selectedCustomNotes.length}/7)`;
                     selectionMessage.classList.remove('text-green-500');
                     selectionMessage.classList.add('text-gray-500');
-                    updateCombinationButtonsAndRenderPairing();
+                    renderPairing();
                 }
             };
 
@@ -576,7 +608,10 @@
                     compressedNotes.forEach(note => {
                         const noteDiv = document.createElement('div');
                         noteDiv.classList.add('note-circle', 'compressed');
-                        noteDiv.textContent = note;
+                        noteDiv.textContent = getNoteSpelling(note);
+                        noteDiv.dataset.note = note; // Store canonical note name
+                        // Add individual enharmonic click listener
+                        noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
                         compressedNotesDisplay.appendChild(noteDiv);
                     });
                 }
@@ -604,8 +639,13 @@
                     } else {
                         // Reset if the old index is not valid for the new pairing set
                         currentSelectedPairingIndex = 0;
-                        combinationButtonsContainer.querySelector(`[data-index="0"]`).classList.add('active');
-                        renderPairing(currentGmcPairings[0]);
+                        const firstBtn = combinationButtonsContainer.querySelector(`[data-index="0"]`);
+                        if (firstBtn) {
+                             firstBtn.classList.add('active');
+                             renderPairing(currentGmcPairings[0]);
+                        } else {
+                             renderPairing();
+                        }
                     }
 
                 } else {
@@ -629,6 +669,22 @@
                 // Render the pairing for the selected combination
                 renderPairing(currentGmcPairings[index]);
             };
+
+            // Event listener for enharmonic toggle button
+            toggleEnharmonicBtn.addEventListener('click', () => {
+                const currentSpelling = enharmonicBtnText.textContent;
+                const useFlatSpelling = currentSpelling === 'Cambiar a Bemoles';
+                
+                // Toggle the global state for all notes
+                notesChromatic.forEach(note => {
+                    noteSpellings[note.sharp] = useFlatSpelling ? note.flat : note.sharp;
+                });
+                
+                enharmonicBtnText.textContent = useFlatSpelling ? 'Cambiar a Sostenidos' : 'Cambiar a Bemoles';
+                
+                // Re-render all sections to apply the new spelling
+                renderAllNotes();
+            });
 
             // Event listener for mode selection
             modeSelect.addEventListener('change', (event) => {
@@ -761,9 +817,13 @@
                                 }
 
                                 invertedIndices.forEach(index => {
+                                    const note = compressedNotes[index];
                                     const noteDiv = document.createElement('div');
                                     noteDiv.classList.add('note-circle', `bg-${groupColor}-700`, `border-${groupColor}-500`);
-                                    noteDiv.textContent = compressedNotes[index];
+                                    noteDiv.textContent = getNoteSpelling(note);
+                                    noteDiv.dataset.note = note; // Store canonical note
+                                    // Add individual enharmonic click listener
+                                    noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
                                     notesDiv.appendChild(noteDiv);
                                 });
                                 inversionGroup.appendChild(notesDiv);
@@ -774,9 +834,13 @@
                             const notesDiv = document.createElement('div');
                             notesDiv.classList.add('note-display');
                             indices.forEach(index => {
+                                const note = compressedNotes[index];
                                 const noteDiv = document.createElement('div');
                                 noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
-                                noteDiv.textContent = compressedNotes[index];
+                                noteDiv.textContent = getNoteSpelling(note);
+                                noteDiv.dataset.note = note; // Store canonical note
+                                // Add individual enharmonic click listener
+                                noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
                                 notesDiv.appendChild(noteDiv);
                             });
                             notesContainer.appendChild(notesDiv);
@@ -812,7 +876,8 @@
                 notesToRender.forEach(note => {
                     const noteDiv = document.createElement('div');
                     noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
-                    noteDiv.textContent = note;
+                    noteDiv.textContent = getNoteSpelling(note);
+                    noteDiv.dataset.note = note; // Store canonical note
                     noteDiv.addEventListener('click', () => {
                         Tone.start(); // Start Tone.js on user interaction
                         synth.triggerAttackRelease(note + '4', '8n'); // Play the note in the 4th octave
