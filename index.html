@@ -169,7 +169,6 @@
         @media (min-width: 640px) {
             h2 { font-size: 1.5rem; line-height: 2rem; }
         }
-
         .note-circle.active-note {
             background-color: #58a6ff;
             color: #161b22;
@@ -187,7 +186,7 @@
             Explora de forma interactiva el concepto de "Generic Modality Compression" (GMC) del libro *Creative Chordal Harmony for Guitar*.
         </p>
 
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4 text-sm">
+        <div id="toolControls" class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4 text-sm">
             <label for="modeSelect" class="font-semibold">Modo:</label>
             <select id="modeSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600">
                 <option value="major">Escala Mayor</option>
@@ -298,18 +297,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Enharmonic spellings for notes
             const notesChromatic = [
-                { sharp: 'C', flat: 'C' },
-                { sharp: 'C#', flat: 'D♭' },
-                { sharp: 'D', flat: 'D' },
-                { sharp: 'D#', flat: 'E♭' },
-                { sharp: 'E', flat: 'E' },
-                { sharp: 'F', flat: 'F' },
-                { sharp: 'F#', flat: 'G♭' },
-                { sharp: 'G', flat: 'G' },
-                { sharp: 'G#', flat: 'A♭' },
-                { sharp: 'A', flat: 'A' },
-                { sharp: 'A#', flat: 'B♭' },
-                { sharp: 'B', flat: 'B' }
+                { sharp: 'C', flat: 'C', playback: 'C' },
+                { sharp: 'C#', flat: 'D♭', playback: 'Db' },
+                { sharp: 'D', flat: 'D', playback: 'D' },
+                { sharp: 'D#', flat: 'E♭', playback: 'Eb' },
+                { sharp: 'E', flat: 'E', playback: 'E' },
+                { sharp: 'F', flat: 'F', playback: 'F' },
+                { sharp: 'F#', flat: 'G♭', playback: 'Gb' },
+                { sharp: 'G', flat: 'G', playback: 'G' },
+                { sharp: 'G#', flat: 'A♭', playback: 'Ab' },
+                { sharp: 'A', flat: 'A', playback: 'A' },
+                { sharp: 'A#', flat: 'B♭', playback: 'Bb' },
+                { sharp: 'B', flat: 'B', playback: 'B' }
             ];
             
             // Map English note names to their Spanish equivalents
@@ -367,8 +366,7 @@
                 { family1: '7th no 5', family2: '7th no 3', group1: [0, 3, 1], group2: [5, 4, 2] }
             ];
             
-            // This map contains the correct note orders for open voicing inversions, based on the user's feedback.
-            // The key is a string representation of the fundamental triad's indices.
+            // This map contains the correct note orders for open voicing inversions.
             const openInversionMap = {
                 '0,4,2': { fundamental: [0, 4, 2], first: [2, 0, 4], second: [4, 2, 0] },
                 '1,5,3': { fundamental: [1, 5, 3], first: [3, 1, 5], second: [5, 3, 1] },
@@ -422,7 +420,7 @@
             const shuffleGroup3Btn = document.getElementById('shuffleGroup3Btn');
             const toggleEnharmonicBtn = document.getElementById('toggleEnharmonicBtn');
             const enharmonicBtnText = document.getElementById('enharmonicBtnText');
-
+            
             // Initialize Tone.js Synth
             let synth = new Tone.Synth().toDestination();
             
@@ -432,9 +430,14 @@
             let currentGmcPairings = closedGmcPairings;
             let currentSelectedPairingIndex = 0;
             let currentRootNote = 'C';
-            
-            // New state: map to store the current spelling for each canonical note (e.g., C#, D♭, etc.)
             let noteSpellings = {};
+
+            // Function to get the correct enharmonic spelling from the state
+            const getNoteSpelling = (note) => {
+                const noteObj = notesChromatic.find(n => n.sharp === note || n.flat === note);
+                const canonicalNote = noteObj ? noteObj.sharp : note;
+                return noteSpellings[canonicalNote] || note;
+            };
 
             // Function to find the canonical note name (the sharp version)
             const findCanonicalNote = (note) => {
@@ -442,10 +445,10 @@
                 return noteObj ? noteObj.sharp : note;
             };
 
-            // Function to get the correct enharmonic spelling from the state
-            const getNoteSpelling = (note) => {
-                const canonicalNote = findCanonicalNote(note);
-                return noteSpellings[canonicalNote] || note;
+            // Function to get the playback-compatible note name for Tone.js
+            const getPlaybackNote = (note) => {
+                const noteObj = notesChromatic.find(n => n.sharp === note || n.flat === note);
+                return noteObj ? noteObj.playback : note;
             };
 
             // Function to toggle the enharmonic spelling and trigger a re-render
@@ -453,12 +456,10 @@
                 const canonicalNote = findCanonicalNote(note);
                 const noteObject = notesChromatic.find(n => n.sharp === canonicalNote);
 
-                // Only toggle if the note has an enharmonic equivalent
                 if (noteObject.sharp !== noteObject.flat) {
                     const currentSpelling = getNoteSpelling(note);
                     const newSpelling = currentSpelling === noteObject.sharp ? noteObject.flat : noteObject.sharp;
                     noteSpellings[canonicalNote] = newSpelling;
-                    // Trigger a re-render of the relevant parts
                     renderAllNotes();
                 }
             };
@@ -518,18 +519,15 @@
                         noteDiv.classList.add('uncompressed');
                     }
                     noteDiv.textContent = getNoteSpelling(note);
-                    noteDiv.dataset.note = note; // Store canonical note name
-                    // Add enharmonic click listener only to non-root notes
+                    noteDiv.dataset.note = note;
                     if (index !== 0) {
                          noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
                     }
                     originalNotesDisplay.appendChild(noteDiv);
                 });
                 
-                // Update scale name in text
                 scaleNameSpan.textContent = scaleNamesSpanish[rootNote] || `${getNoteSpelling(rootNote)} Mayor`;
                 
-                // Show step 2 and 3 sections
                 step2Section.classList.remove('hidden');
                 step3Section.classList.remove('hidden');
                 rootNoteSpan.textContent = getNoteSpelling(rootNote);
@@ -544,7 +542,6 @@
                 notesChromatic.forEach(note => {
                     const noteDiv = document.createElement('div');
                     noteDiv.classList.add('note-circle', 'selectable');
-                    // Use a dataset attribute to store the canonical note
                     noteDiv.dataset.note = note.sharp; 
                     noteDiv.innerHTML = `${note.sharp}<br/>${note.flat}`;
                     
@@ -555,11 +552,9 @@
                         const index = selectedCustomNotes.indexOf(note);
                         
                         if (index === -1 && selectedCustomNotes.length < 7) {
-                            // If not selected and there's space, add it
                             selectedCustomNotes.push(note);
                             noteDiv.classList.add('selected');
                         } else if (index > -1) {
-                            // If the note is already selected, remove it
                             selectedCustomNotes.splice(index, 1);
                             noteDiv.classList.remove('selected');
                         }
@@ -573,7 +568,6 @@
 
             // Update the custom scale app logic
             const updateAppCustom = () => {
-                // Set the first selected note as the root and compress the scale
                 if (selectedCustomNotes.length > 0) {
                     currentRootNote = selectedCustomNotes[0];
                     rootNoteSpan.textContent = getNoteSpelling(currentRootNote);
@@ -609,8 +603,7 @@
                         const noteDiv = document.createElement('div');
                         noteDiv.classList.add('note-circle', 'compressed');
                         noteDiv.textContent = getNoteSpelling(note);
-                        noteDiv.dataset.note = note; // Store canonical note name
-                        // Add individual enharmonic click listener
+                        noteDiv.dataset.note = note;
                         noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
                         compressedNotesDisplay.appendChild(noteDiv);
                     });
@@ -624,20 +617,17 @@
                     currentGmcPairings.forEach((pairing, index) => {
                         const button = document.createElement('button');
                         button.classList.add('combination-button');
-                        // Prepend the index + 1 and a period to the button text
                         button.textContent = `${index + 1}. ${pairing.family1} / ${pairing.family2}`;
                         button.dataset.index = index;
                         button.addEventListener('click', handleCombinationSelection);
                         combinationButtonsContainer.appendChild(button);
                     });
                     
-                    // Set the active button and render the pairing if an index is stored
                     const activeBtn = combinationButtonsContainer.querySelector(`[data-index="${currentSelectedPairingIndex}"]`);
                     if (activeBtn) {
                         activeBtn.classList.add('active');
                         renderPairing(currentGmcPairings[currentSelectedPairingIndex]);
                     } else {
-                        // Reset if the old index is not valid for the new pairing set
                         currentSelectedPairingIndex = 0;
                         const firstBtn = combinationButtonsContainer.querySelector(`[data-index="0"]`);
                         if (firstBtn) {
@@ -650,7 +640,7 @@
 
                 } else {
                     combinationButtonsContainer.innerHTML = '';
-                    renderPairing(); // Clear the pairing display
+                    renderPairing();
                 }
             };
             
@@ -659,14 +649,10 @@
                 const button = event.target;
                 const index = parseInt(button.dataset.index);
 
-                // Deactivate all other buttons and activate the selected one
                 document.querySelectorAll('.combination-button').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
 
-                // Store the selected pairing index
                 currentSelectedPairingIndex = index;
-
-                // Render the pairing for the selected combination
                 renderPairing(currentGmcPairings[index]);
             };
 
@@ -675,14 +661,12 @@
                 const currentSpelling = enharmonicBtnText.textContent;
                 const useFlatSpelling = currentSpelling === 'Cambiar a Bemoles';
                 
-                // Toggle the global state for all notes
                 notesChromatic.forEach(note => {
                     noteSpellings[note.sharp] = useFlatSpelling ? note.flat : note.sharp;
                 });
                 
                 enharmonicBtnText.textContent = useFlatSpelling ? 'Cambiar a Sostenidos' : 'Cambiar a Bemoles';
                 
-                // Re-render all sections to apply the new spelling
                 renderAllNotes();
             });
 
@@ -699,7 +683,6 @@
                 } else {
                     currentGmcPairings = openGmcPairings;
                 }
-                // Re-render the combination buttons based on the new selection
                 if (compressedNotes.length === 6) {
                     updateCombinationButtonsAndRenderPairing();
                 }
@@ -715,25 +698,33 @@
                 renderApp(modeSelect.value);
             });
             
-            // Event listener for note count change (new)
             noteCountSelect.addEventListener('change', () => {
                 shuffleGroup3();
             });
 
-            // Event listener for shuffle button (new)
             shuffleGroup3Btn.addEventListener('click', () => {
                 shuffleGroup3();
             });
 
-            // Event listener for play button
             playGroup3Btn.addEventListener('click', () => {
                 playGroup3Notes();
             });
+            
+            // Function to play a single note
+            const playSingleNote = (note) => {
+                try {
+                    Tone.start();
+                    const playbackNote = getPlaybackNote(note);
+                    synth.triggerAttackRelease(playbackNote + '4', '8n');
+                } catch (e) {
+                    console.error("Error playing note:", e);
+                    // Could add a small error message here if needed.
+                }
+            };
 
             // Function to apply inversion based on voicing type
             const applyInversion = (noteIndices, inversion, voicing) => {
-                if (noteIndices.length !== 3) return noteIndices; // Only apply to triads
-
+                if (noteIndices.length !== 3) return noteIndices;
                 const indicesStr = noteIndices.join(',');
 
                 if (voicing === 'closed') {
@@ -752,9 +743,8 @@
                         }
                     }
                 }
-                return noteIndices; // Return fundamental for invalid inversion/voicing
+                return noteIndices;
             };
-
 
             // Function to render the pairing visualization based on a selected pairing object
             const renderPairing = (pairing = null) => {
@@ -770,34 +760,25 @@
                     pairingDisplay.style.display = 'flex';
                     const currentVoicing = triadVoicingSelect.value;
                     
-                    // Function to render a single group of notes (or multiple for triads)
                     const renderGroup = (notesContainer, indices, familyName, groupColor) => {
-                        notesContainer.innerHTML = ''; // Clear previous content
-                        // Check if the group is a triad.
+                        notesContainer.innerHTML = '';
                         const isTriad = familyName.includes('Triada') || familyName.includes('Sus') || familyName.includes('Cluster') || familyName.includes('7th');
                         
                         if (isTriad) {
-                            // Define inversion names
                             const inversionNames = ['Fundamental', '1ra inversión', '2da inversión'];
-                            
-                            // The order of rendering will change based on voicing
                             const inversionOrder = ['0', '1', '2'];
                             
                             inversionOrder.forEach((inversionType, idx) => {
-                                // Create a container for each inversion that forces a new line
                                 const inversionGroup = document.createElement('div');
                                 inversionGroup.classList.add('triad-inversion-group');
                                 
                                 const titleSpan = document.createElement('span');
                                 titleSpan.classList.add('inversion-title');
-                                // Special case for open voicing, the order of names is different
                                 if (currentVoicing === 'open') {
-                                     // For open, we want to render Fundamental, then 2nd Inv, then 1st Inv
-                                     if (idx === 0) titleSpan.textContent = inversionNames[0]; // Fundamental
-                                     else if (idx === 1) titleSpan.textContent = inversionNames[2]; // 2da inversión
-                                     else if (idx === 2) titleSpan.textContent = inversionNames[1]; // 1ra inversión
+                                     if (idx === 0) titleSpan.textContent = inversionNames[0];
+                                     else if (idx === 1) titleSpan.textContent = inversionNames[2];
+                                     else if (idx === 2) titleSpan.textContent = inversionNames[1];
                                 } else {
-                                     // Closed voicing uses the standard order
                                      titleSpan.textContent = inversionNames[idx];
                                 }
                                 
@@ -806,12 +787,11 @@
                                 const notesDiv = document.createElement('div');
                                 notesDiv.classList.add('inversion-notes-row');
 
-                                // Get the correct inverted notes based on voicing logic
                                 let invertedIndices;
                                 if (currentVoicing === 'open') {
-                                     if (idx === 0) invertedIndices = indices; // Fundamental
-                                     else if (idx === 1) invertedIndices = applyInversion(indices, '2', 'open'); // 2nd Inversion
-                                     else if (idx === 2) invertedIndices = applyInversion(indices, '1', 'open'); // 1st Inversion
+                                     if (idx === 0) invertedIndices = indices;
+                                     else if (idx === 1) invertedIndices = applyInversion(indices, '2', 'open');
+                                     else if (idx === 2) invertedIndices = applyInversion(indices, '1', 'open');
                                 } else {
                                      invertedIndices = applyInversion(indices, inversionType, 'closed');
                                 }
@@ -821,16 +801,14 @@
                                     const noteDiv = document.createElement('div');
                                     noteDiv.classList.add('note-circle', `bg-${groupColor}-700`, `border-${groupColor}-500`);
                                     noteDiv.textContent = getNoteSpelling(note);
-                                    noteDiv.dataset.note = note; // Store canonical note
-                                    // Add individual enharmonic click listener
-                                    noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
+                                    noteDiv.dataset.note = note;
+                                    noteDiv.addEventListener('click', () => playSingleNote(note));
                                     notesDiv.appendChild(noteDiv);
                                 });
                                 inversionGroup.appendChild(notesDiv);
                                 notesContainer.appendChild(inversionGroup);
                             });
                         } else {
-                            // Non-triad pairings, render a single line
                             const notesDiv = document.createElement('div');
                             notesDiv.classList.add('note-display');
                             indices.forEach(index => {
@@ -838,86 +816,79 @@
                                 const noteDiv = document.createElement('div');
                                 noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
                                 noteDiv.textContent = getNoteSpelling(note);
-                                noteDiv.dataset.note = note; // Store canonical note
-                                // Add individual enharmonic click listener
-                                noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
+                                noteDiv.dataset.note = note;
+                                noteDiv.addEventListener('click', () => playSingleNote(note));
                                 notesDiv.appendChild(noteDiv);
                             });
                             notesContainer.appendChild(notesDiv);
                         }
                     };
 
-                    // Render Group 1 and Group 2
                     renderGroup(group1NotesDiv, pairing.group1, pairing.family1, 'sky');
                     group1Display.querySelector('h3').textContent = `Grupo 1: ${pairing.family1}`;
 
                     renderGroup(group2NotesDiv, pairing.group2, pairing.family2, 'emerald');
                     group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
-
-                    // Initial render of group 3
+                    
                     shuffleGroup3();
                 }
             };
             
-            // Function to shuffle the notes and render Group 3
             const shuffleGroup3 = () => {
                 group3NotesDiv.innerHTML = '';
-                const allNotes = [...compressedNotes]; // Get all 6 notes
-                const noteCount = parseInt(noteCountSelect.value) || 6; // Default to 6
+                const allNotes = [...compressedNotes];
+                const noteCount = parseInt(noteCountSelect.value) || 6;
                 
-                // Shuffle the notes
+                if (allNotes.length < 1) {
+                    return;
+                }
+
                 for (let i = allNotes.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [allNotes[i], allNotes[j]] = [allNotes[j], allNotes[i]];
                 }
 
-                // Render the selected number of notes and add click sound event
                 const notesToRender = allNotes.slice(0, noteCount);
                 notesToRender.forEach(note => {
                     const noteDiv = document.createElement('div');
                     noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
                     noteDiv.textContent = getNoteSpelling(note);
-                    noteDiv.dataset.note = note; // Store canonical note
+                    noteDiv.dataset.note = note;
                     noteDiv.addEventListener('click', () => {
-                        Tone.start(); // Start Tone.js on user interaction
-                        synth.triggerAttackRelease(note + '4', '8n'); // Play the note in the 4th octave
+                        playSingleNote(note);
                     });
                     group3NotesDiv.appendChild(noteDiv);
                 });
             };
 
-            // Function to play all notes in Group 3 sequentially with the selected rhythm
             const playGroup3Notes = () => {
-                Tone.start(); // Start Tone.js on user interaction
                 const noteElements = Array.from(group3NotesDiv.querySelectorAll('.note-circle'));
+                if (noteElements.length === 0) {
+                    return;
+                }
+                
+                Tone.start();
                 const rhythm = rhythmSelect.value;
                 const noteDuration = Tone.Time(rhythm).toSeconds();
                 let time = Tone.now();
                 
                 noteElements.forEach((noteElement, index) => {
-                    const note = noteElement.textContent;
-                    // Schedule the audio playback
-                    synth.triggerAttackRelease(note + '4', noteDuration, time);
+                    const note = noteElement.dataset.note;
+                    const playbackNote = getPlaybackNote(note);
+                    synth.triggerAttackRelease(playbackNote + '4', noteDuration, time);
 
-                    // Schedule the visual effect to happen at the same time
                     Tone.Transport.scheduleOnce(() => {
                         noteElement.classList.add('active-note');
-                        // Schedule the removal of the visual effect after the note's duration
                         Tone.Transport.scheduleOnce(() => {
                             noteElement.classList.remove('active-note');
                         }, `+${noteDuration}`);
                     }, time);
 
-                    // Increment the time for the next note
                     time += noteDuration;
                 });
-
-                // Start the Tone.js transport
                 Tone.Transport.start();
             };
 
-
-            // Initialize the app with the major scale view
             renderApp(modeSelect.value);
         });
     </script>
