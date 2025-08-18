@@ -30,20 +30,27 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 0.25rem;
+            gap: 0.5rem;
             margin: 0.5rem 0;
+        }
+        .note-display.horizontal-scroll {
+            flex-wrap: nowrap; /* Prevent wrapping for horizontal layout */
+            overflow-x: auto; /* Add horizontal scroll if needed */
+            justify-content: flex-start;
         }
         .note-circle {
             background-color: #21262d;
             border: 2px solid #30363d;
             border-radius: 50%;
-            width: 2.2rem;
-            height: 2.2rem;
+            /* Ajustado el tamaño y la fuente para mejorar la legibilidad */
+            width: 2.3rem;
+            height: 2.3rem;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
             align-items: center;
             justify-content: center;
-            font-size: 0.6rem;
+            font-size: 0.75rem; /* Aumentado el tamaño de la fuente */
             line-height: 0.8;
             font-weight: bold;
             transition: all 0.2s ease-in-out;
@@ -96,46 +103,41 @@
             transform: scale(1.05);
         }
         .pairing-display {
-            display: none;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
             margin-top: 1rem;
         }
-        @media (min-width: 640px) {
+        @media (min-width: 768px) {
             .pairing-display {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-        @media (min-width: 1024px) {
-            .pairing-display {
-                grid-template-columns: 1fr 1fr 1fr;
+                flex-direction: row;
             }
         }
         .pairing-display .note-group {
+            flex: 1;
             background-color: #0d1117;
             padding: 1rem;
             border-radius: 0.75rem;
             border: 1px solid #30363d;
         }
-        /* Updated styling for triad inversions to ensure three distinct rows */
         .triad-inversion-group {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 1rem; /* Increased margin for better separation */
+            margin-bottom: 0.75rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid #30363d; /* Added border for clear visual separation */
+            border-bottom: 1px solid #30363d;
         }
         .inversion-title {
             font-size: 0.75rem;
             font-weight: normal;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
             color: #8b949e;
         }
         .inversion-notes-row {
             display: flex;
             justify-content: center;
-            gap: 0.25rem;
+            gap: 0.3rem;
         }
         .play-button {
             background-color: #059669;
@@ -154,26 +156,47 @@
             background-color: #047857;
             transform: translateY(-2px);
         }
+        h1 {
+            font-size: 1.75rem;
+            line-height: 2.25rem;
+        }
+        @media (min-width: 640px) {
+            h1 { font-size: 2rem; line-height: 2.5rem; }
+        }
+        h2 {
+            font-size: 1.25rem;
+            line-height: 1.75rem;
+        }
+        @media (min-width: 640px) {
+            h2 { font-size: 1.5rem; line-height: 2rem; }
+        }
+
+        .note-circle.active-note {
+            background-color: #58a6ff;
+            color: #161b22;
+            box-shadow: 0 0 15px 5px rgba(88, 166, 255, 0.7);
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
 
     <div class="container">
-        <h1 class="text-xl sm:text-2xl font-bold text-center mb-2 text-cyan-400">Explorador GMC Interactivo</h1>
-        <p class="text-center text-xs sm:text-sm text-gray-400 mb-2">Diseñado por: Juan Miguel Ríos Redondo</p>
-        <p class="text-center text-xs sm:text-sm text-gray-400 mb-4">
+        <h1 class="font-bold text-center mb-2 text-cyan-400">Explorador GMC Interactivo</h1>
+        <p class="text-center text-sm text-gray-400 mb-2">Diseñado por: Juan Miguel Ríos Redondo</p>
+        <p class="text-center text-sm text-gray-400 mb-4">
             Explora de forma interactiva el concepto de "Generic Modality Compression" (GMC) del libro *Creative Chordal Harmony for Guitar*.
         </p>
 
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-4">
-            <label for="modeSelect" class="text-sm font-semibold">Modo:</label>
-            <select id="modeSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600">
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4 text-sm">
+            <label for="modeSelect" class="font-semibold">Modo:</label>
+            <select id="modeSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600">
                 <option value="major">Escala Mayor</option>
                 <option value="custom">Escala Personalizada</option>
             </select>
             <!-- Dropdown for triad voicing -->
-            <label for="triadVoicingSelect" class="text-sm font-semibold">Triada:</label>
-            <select id="triadVoicingSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600">
+            <label for="triadVoicingSelect" class="font-semibold">Triada:</label>
+            <select id="triadVoicingSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600">
                 <option value="closed">Cerrada</option>
                 <option value="open">Abierta</option>
             </select>
@@ -181,9 +204,9 @@
 
         <!-- Major Scale Selection Mode -->
         <div id="majorMode" class="text-center mb-4">
-            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 1: Selecciona la Tonalidad</h2>
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-4">
-                <select id="scaleSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600">
+            <h2 class="font-semibold mb-1">Paso 1: Selecciona la Tonalidad</h2>
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
+                <select id="scaleSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600">
                     <option value="C">Do Mayor</option>
                     <option value="C#">Do# Mayor</option>
                     <option value="D">Re Mayor</option>
@@ -198,63 +221,64 @@
                     <option value="B">Si Mayor</option>
                 </select>
             </div>
-            <p class="text-xs">La escala de <span id="scaleName">Do Mayor</span> contiene siete notas:</p>
+            <p class="text-sm">La escala de <span id="scaleName">Do Mayor</span> contiene siete notas:</p>
             <div id="originalNotes" class="note-display"></div>
         </div>
 
         <!-- Custom Scale Selection Mode -->
         <div id="customMode" class="text-center mb-4 hidden">
-            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 1: Selecciona las notas</h2>
-            <p id="selectionMessage" class="text-xs text-gray-500">Selecciona 7 notas en el orden deseado. La primera nota será la raíz.</p>
-            <div id="selectableNotes" class="note-display"></div>
+            <h2 class="font-semibold mb-1">Paso 1: Selecciona las notas</h2>
+            <p id="selectionMessage" class="text-sm text-gray-500">Selecciona 7 notas en el orden deseado. La primera nota será la raíz.</p>
+            <div id="selectableNotes" class="note-display horizontal-scroll"></div>
         </div>
 
         <div class="text-center mb-4 hidden" id="step2Section">
-            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 2: La Escala Comprimida</h2>
-            <p class="text-xs text-gray-400">La nota raíz (<span id="rootNote"></span>) ha sido removida, dejando las siguientes notas:</p>
+            <h2 class="font-semibold mb-1">Paso 2: La Escala Comprimida</h2>
+            <p class="text-sm text-gray-400">La nota raíz (<span id="rootNote"></span>) ha sido removida, dejando las siguientes notas:</p>
             <div id="compressedNotesDisplay" class="note-display"></div>
         </div>
 
         <!-- NEW Step 3 Section for direct combination selection -->
         <div class="text-center mb-4 hidden" id="step3Section">
-            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 3: Selecciona una combinación</h2>
+            <h2 class="font-semibold mb-1">Paso 3: Selecciona una combinación</h2>
             <div id="combinationButtons" class="flex flex-wrap justify-center gap-2 mb-2">
                 <!-- Buttons will be generated dynamically here -->
             </div>
-            <button id="resetBtn" class="bg-gray-600 text-white text-xs py-1 px-3 rounded-full hover:bg-gray-500 transition-colors">Reiniciar</button>
+            <button id="resetBtn" class="bg-gray-600 text-white text-sm py-1 px-3 rounded-full hover:bg-gray-500 transition-colors">Reiniciar</button>
         </div>
         
         <div id="pairingDisplay" class="pairing-display">
             <div id="group1" class="note-group">
-                <h3 class="text-sm font-bold mb-1"></h3>
+                <h3 class="text-md font-bold mb-1"></h3>
                 <div class="notes"></div>
             </div>
             <div id="group2" class="note-group">
-                <h3 class="text-sm font-bold mb-1"></h3>
+                <h3 class="text-md font-bold mb-1"></h3>
                 <div class="notes"></div>
             </div>
             <div id="group3" class="note-group">
-                <h3 class="text-sm font-bold mb-1">Grupo 3: Notas aleatorias</h3>
+                <h3 class="text-md font-bold mb-1">Grupo 3: Notas aleatorias</h3>
                 <div class="flex flex-col items-center gap-2">
-                    <div class="flex items-center gap-2">
-                        <label for="noteCountSelect" class="text-xs">Número de notas:</label>
-                        <select id="noteCountSelect" class="bg-gray-700 text-white text-xs p-1 w-12 rounded-lg border border-gray-600 text-center">
+                    <div class="flex items-center gap-2 mt-2 text-sm">
+                        <label for="noteCountSelect">Número de notas:</label>
+                        <select id="noteCountSelect" class="bg-gray-700 text-white text-sm p-1 w-12 rounded-lg border border-gray-600 text-center">
                             <option value="1">1</option>
                             <option value="2">2</option>
-                            <option value="3" selected>3</option>
+                            <option value="3">3</option>
                             <option value="4">4</option>
                             <option value="5">5</option>
-                            <option value="6">6</option>
+                            <option value="6" selected>6</option>
                         </select>
                     </div>
-                    <div class="flex items-center gap-2 mt-2">
-                        <label for="rhythmSelect" class="text-xs">Ritmo:</label>
-                        <select id="rhythmSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600 text-center">
+                    <div class="flex items-center gap-2 mt-2 text-sm">
+                        <label for="rhythmSelect">Ritmo:</label>
+                        <select id="rhythmSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600 text-center">
                             <option value="4n">Negras</option>
                             <option value="8n" selected>Corcheas</option>
                             <option value="16n">Semicorcheas</option>
                         </select>
-                        <button id="playGroup3Btn" class="play-button text-xs py-1 px-3 rounded-full">Play</button>
+                        <button id="shuffleGroup3Btn" class="play-button bg-blue-600 hover:bg-blue-500">Aleatorio</button>
+                        <button id="playGroup3Btn" class="play-button">Play</button>
                     </div>
                 </div>
                 <div class="note-display notes mt-2"></div>
@@ -411,6 +435,7 @@
             const noteCountSelect = document.getElementById('noteCountSelect');
             const rhythmSelect = document.getElementById('rhythmSelect');
             const playGroup3Btn = document.getElementById('playGroup3Btn');
+            const shuffleGroup3Btn = document.getElementById('shuffleGroup3Btn');
 
             // Initialize Tone.js Synth
             let synth = new Tone.Synth().toDestination();
@@ -639,6 +664,11 @@
                 shuffleGroup3();
             });
 
+            // Event listener for shuffle button (new)
+            shuffleGroup3Btn.addEventListener('click', () => {
+                shuffleGroup3();
+            });
+
             // Event listener for play button
             playGroup3Btn.addEventListener('click', () => {
                 playGroup3Notes();
@@ -681,7 +711,7 @@
                 
                 if (pairing && compressedNotes.length === 6) {
                     infoMessage.style.display = 'none';
-                    pairingDisplay.style.display = 'grid';
+                    pairingDisplay.style.display = 'flex';
                     const currentVoicing = triadVoicingSelect.value;
                     
                     // Function to render a single group of notes (or multiple for triads)
@@ -745,7 +775,7 @@
                             notesDiv.classList.add('note-display');
                             indices.forEach(index => {
                                 const noteDiv = document.createElement('div');
-                                noteDiv.classList.add('note-circle', `bg-${groupColor}-700`, `border-${groupColor}-500`);
+                                noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
                                 noteDiv.textContent = compressedNotes[index];
                                 notesDiv.appendChild(noteDiv);
                             });
@@ -769,7 +799,7 @@
             const shuffleGroup3 = () => {
                 group3NotesDiv.innerHTML = '';
                 const allNotes = [...compressedNotes]; // Get all 6 notes
-                const noteCount = parseInt(noteCountSelect.value) || 3;
+                const noteCount = parseInt(noteCountSelect.value) || 6; // Default to 6
                 
                 // Shuffle the notes
                 for (let i = allNotes.length - 1; i > 0; i--) {
@@ -796,16 +826,29 @@
                 Tone.start(); // Start Tone.js on user interaction
                 const noteElements = Array.from(group3NotesDiv.querySelectorAll('.note-circle'));
                 const rhythm = rhythmSelect.value;
-                const noteDuration = rhythm;
+                const noteDuration = Tone.Time(rhythm).toSeconds();
                 let time = Tone.now();
                 
                 noteElements.forEach((noteElement, index) => {
                     const note = noteElement.textContent;
-                    // Play the note with the selected duration and a slight offset
+                    // Schedule the audio playback
                     synth.triggerAttackRelease(note + '4', noteDuration, time);
-                    // Increment the time based on the selected rhythm's duration
-                    time += Tone.Time(noteDuration).toSeconds();
+
+                    // Schedule the visual effect to happen at the same time
+                    Tone.Transport.scheduleOnce(() => {
+                        noteElement.classList.add('active-note');
+                        // Schedule the removal of the visual effect after the note's duration
+                        Tone.Transport.scheduleOnce(() => {
+                            noteElement.classList.remove('active-note');
+                        }, `+${noteDuration}`);
+                    }, time);
+
+                    // Increment the time for the next note
+                    time += noteDuration;
                 });
+
+                // Start the Tone.js transport
+                Tone.Transport.start();
             };
 
 
