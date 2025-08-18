@@ -117,6 +117,26 @@
             border-radius: 0.75rem;
             border: 1px solid #30363d;
         }
+        /* Updated styling for triad inversions to ensure three distinct rows */
+        .triad-inversion-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1rem; /* Increased margin for better separation */
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #30363d; /* Added border for clear visual separation */
+        }
+        .inversion-title {
+            font-size: 0.75rem;
+            font-weight: normal;
+            margin-bottom: 0.25rem;
+            color: #8b949e;
+        }
+        .inversion-notes-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.25rem;
+        }
         .play-button {
             background-color: #059669;
             color: white;
@@ -150,6 +170,12 @@
             <select id="modeSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600">
                 <option value="major">Escala Mayor</option>
                 <option value="custom">Escala Personalizada</option>
+            </select>
+            <!-- Dropdown for triad voicing -->
+            <label for="triadVoicingSelect" class="text-sm font-semibold">Triada:</label>
+            <select id="triadVoicingSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600">
+                <option value="closed">Cerrada</option>
+                <option value="open">Abierta</option>
             </select>
         </div>
 
@@ -201,11 +227,11 @@
         <div id="pairingDisplay" class="pairing-display">
             <div id="group1" class="note-group">
                 <h3 class="text-sm font-bold mb-1"></h3>
-                <div class="note-display notes"></div>
+                <div class="notes"></div>
             </div>
             <div id="group2" class="note-group">
                 <h3 class="text-sm font-bold mb-1"></h3>
-                <div class="note-display notes"></div>
+                <div class="notes"></div>
             </div>
             <div id="group3" class="note-group">
                 <h3 class="text-sm font-bold mb-1">Grupo 3: Notas aleatorias</h3>
@@ -266,14 +292,14 @@
                 'G#': 'Sol# Mayor', 'A': 'La Mayor', 'A#': 'La# Mayor', 'B': 'Si Mayor'
             };
 
-            // This data structure holds all 10 specific pairings provided by the user.
-            const allGmcPairings = [
+            // This data structure holds all 10 specific pairings for CLOSED voicing.
+            const closedGmcPairings = [
                 // 1. Triad / Triad
-                { family1: 'Triad', family2: 'Triad', group1: [0, 2, 4], group2: [1, 3, 5] },
+                { family1: 'Triada', family2: 'Triada', group1: [0, 2, 4], group2: [1, 3, 5] },
                 // 2. Triad / 7th no 5
-                { family1: 'Triad', family2: '7th no 5', group1: [3, 5, 0], group2: [2, 4, 1] },
+                { family1: 'Triada', family2: '7th no 5', group1: [3, 5, 0], group2: [2, 4, 1] },
                 // 3. Triad / 7th no 3
-                { family1: 'Triad', family2: '7th no 3', group1: [5, 0, 2], group2: [4, 1, 3] },
+                { family1: 'Triada', family2: '7th no 3', group1: [5, 0, 2], group2: [4, 1, 3] },
                 // 4. Sus4 / Sus4
                 { family1: 'Sus4', family2: 'Sus4', group1: [5, 1, 2], group2: [4, 0, 3] },
                 // 5. Sus4 / 7th no 5
@@ -290,8 +316,77 @@
                 { family1: '7th no 5', family2: '7th no 3', group1: [0, 1, 3], group2: [5, 2, 4] }
             ];
 
+            // This data structure holds all 10 specific pairings for OPEN voicing.
+            const openGmcPairings = [
+                // 1. Triad / Triad (numbers: 264 / 375 -> indices: [0, 4, 2] / [1, 5, 3])
+                { family1: 'Triada', family2: 'Triada', group1: [0, 4, 2], group2: [1, 5, 3] },
+                // 2. Triad / 7th no 5 (numbers: 527 / 436 -> indices: [3, 0, 5] / [2, 1, 4])
+                { family1: 'Triada', family2: '7th no 5', group1: [3, 0, 5], group2: [2, 1, 4] },
+                // 3. Triad / 7th no 3 (numbers: 742 / 653 -> indices: [5, 2, 0] / [4, 3, 1])
+                { family1: 'Triada', family2: '7th no 3', group1: [5, 2, 0], group2: [4, 3, 1] },
+                // 4. Sus4 / Sus4 (numbers: 743 / 652 -> indices: [5, 2, 1] / [4, 3, 0])
+                { family1: 'Sus4', family2: 'Sus4', group1: [5, 2, 1], group2: [4, 3, 0] },
+                // 5. Sus4 / 7th no 5 (numbers: 632 / 543 -> indices: [4, 1, 0] / [3, 2, 1])
+                { family1: 'Sus4', family2: '7th no 5', group1: [4, 1, 0], group2: [3, 2, 1] },
+                // 6. Sus4 / 7th no 3 (numbers: 376 / 425 -> indices: [1, 5, 4] / [2, 0, 3])
+                { family1: 'Sus4', family2: '7th no 3', group1: [1, 5, 4], group2: [2, 0, 3] },
+                // 7. Cluster / Cluster (numbers: 432 / 657 -> indices: [2, 1, 0] / [4, 3, 5])
+                { family1: 'Cluster', family2: 'Cluster', group1: [2, 1, 0], group2: [4, 3, 5] },
+                // 8. Cluster / 7th no 5 (numbers: 543 / 762 -> indices: [3, 2, 1] / [5, 4, 0])
+                { family1: 'Cluster', family2: '7th no 5', group1: [3, 2, 1], group2: [5, 4, 0] },
+                // 9. Cluster / 7th no 3 (numbers: 465 / 273 -> indices: [2, 4, 3] / [0, 5, 1])
+                { family1: 'Cluster', family2: '7th no 3', group1: [2, 4, 3], group2: [0, 5, 1] },
+                // 10. 7th no 5 / 7th no 3 (numbers: 253 / 764 -> indices: [0, 3, 1] / [5, 4, 2])
+                { family1: '7th no 5', family2: '7th no 3', group1: [0, 3, 1], group2: [5, 4, 2] }
+            ];
+
+            // This map contains the correct note orders for open voicing inversions, based on the user's feedback.
+            // The key is a string representation of the fundamental triad's indices.
+            const openInversionMap = {
+                // Triada / Triada
+                '0,4,2': { fundamental: [0, 4, 2], first: [2, 0, 4], second: [4, 2, 0] }, // DAF (264) -> FDA (426) -> AFD (642)
+                '1,5,3': { fundamental: [1, 5, 3], first: [3, 1, 5], second: [5, 3, 1] }, // EBG (375) -> GEB (537) -> BGE (753)
+                
+                // Triada / 7th no 5
+                '3,0,5': { fundamental: [3, 0, 5], first: [5, 3, 0], second: [0, 5, 3] }, // GDB (527) -> BGD (752) -> DBG (275)
+                '2,1,4': { fundamental: [2, 1, 4], first: [4, 2, 1], second: [1, 4, 2] }, // FEA (436) -> AFE (643) -> EAF (364)
+                
+                // Triada / 7th no 3
+                '5,2,0': { fundamental: [5, 2, 0], first: [0, 5, 2], second: [2, 0, 5] }, // BFD (742) -> DBF (274) -> FDB (427)
+                '4,3,1': { fundamental: [4, 3, 1], first: [1, 4, 3], second: [3, 1, 4] }, // AGE (653) -> EAG (365) -> GEA (536)
+                
+                // Sus4 / Sus4
+                '5,2,1': { fundamental: [5, 2, 1], first: [1, 5, 2], second: [2, 1, 5] }, // BFE (743) -> EBF (374) -> FEB (437)
+                '4,3,0': { fundamental: [4, 3, 0], first: [0, 4, 3], second: [3, 0, 4] }, // AGD (652) -> DAG (265) -> GDA (526)
+                
+                // Sus4 / 7th no 5
+                '4,1,0': { fundamental: [4, 1, 0], first: [0, 4, 1], second: [1, 0, 4] }, // AED (632) -> DAE (263) -> EDA (326)
+                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] }, // GFB (543) -> BGF (354) -> FBG (435)
+                
+                // Sus4 / 7th no 3
+                '1,5,4': { fundamental: [1, 5, 4], first: [4, 1, 5], second: [5, 4, 1] }, // EBA (376) -> AEB (637) -> BAE (763)
+                '2,0,3': { fundamental: [2, 0, 3], first: [3, 2, 0], second: [0, 3, 2] }, // FDG (425) -> GFD (542) -> DGF (254)
+                
+                // Cluster / Cluster
+                '2,1,0': { fundamental: [2, 1, 0], first: [0, 2, 1], second: [1, 0, 2] }, // FED (432) -> DFE (243) -> EDF (324)
+                '4,3,5': { fundamental: [4, 3, 5], first: [5, 4, 3], second: [3, 5, 4] }, // AGB (657) -> BAG (765) -> GBA (576)
+                
+                // Cluster / 7th no 5
+                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] }, // GFE (543) -> EGF (354) -> FEG (435)
+                '5,4,0': { fundamental: [5, 4, 0], first: [0, 5, 4], second: [4, 0, 5] }, // BAD (762) -> DBA (276) -> ADB (627)
+                
+                // Cluster / 7th no 3
+                '2,4,3': { fundamental: [2, 4, 3], first: [3, 2, 4], second: [4, 3, 2] }, // FAG (465) -> GFA (546) -> AGF (654)
+                '0,5,1': { fundamental: [0, 5, 1], first: [1, 0, 5], second: [5, 1, 0] }, // DBE (273) -> EDB (327) -> BED (732)
+                
+                // 7th no 5 / 7th no 3
+                '0,3,1': { fundamental: [0, 3, 1], first: [1, 0, 3], second: [3, 1, 0] }, // DGE (253) -> EDG (325) -> GED (532)
+                '5,4,2': { fundamental: [5, 4, 2], first: [2, 5, 4], second: [4, 2, 5] }, // BAF (764) -> AFB (647) -> FBA (476)
+            };
+
             // DOM element references
             const modeSelect = document.getElementById('modeSelect');
+            const triadVoicingSelect = document.getElementById('triadVoicingSelect');
             const majorModeSection = document.getElementById('majorMode');
             const customModeSection = document.getElementById('customMode');
             const scaleSelect = document.getElementById('scaleSelect');
@@ -323,14 +418,15 @@
             // Application state
             let compressedNotes = [];
             let selectedCustomNotes = [];
+            let currentGmcPairings = closedGmcPairings;
+            let currentSelectedPairingIndex = 0; // Store the index of the currently selected pairing
 
             // Main render function based on the selected mode
             const renderApp = (mode) => {
                 // Reset state
                 selectedCustomNotes = [];
-                document.querySelectorAll('.combination-button').forEach(button => button.classList.remove('active'));
+                currentSelectedPairingIndex = 0; // Reset selected pairing
                 document.querySelectorAll('.note-circle.selectable').forEach(btn => btn.classList.remove('selected'));
-                renderPairing();
                 
                 if (mode === 'major') {
                     majorModeSection.classList.remove('hidden');
@@ -378,7 +474,7 @@
                 rootNoteSpan.textContent = rootNote;
                 
                 updateCompressedNotesDisplay();
-                renderPairing();
+                updateCombinationButtonsAndRenderPairing();
             };
 
             // Renders the custom scale view
@@ -435,7 +531,7 @@
                     step3Section.classList.remove('hidden');
 
                     updateCompressedNotesDisplay();
-                    renderPairing();
+                    updateCombinationButtonsAndRenderPairing();
                     
                 } else {
                     compressedNotes = [];
@@ -444,7 +540,7 @@
                     selectionMessage.textContent = `Selecciona 7 notas en el orden deseado. La primera nota será la raíz. (${selectedCustomNotes.length}/7)`;
                     selectionMessage.classList.remove('text-green-500');
                     selectionMessage.classList.add('text-gray-500');
-                    renderPairing();
+                    updateCombinationButtonsAndRenderPairing();
                 }
             };
 
@@ -459,26 +555,38 @@
                         compressedNotesDisplay.appendChild(noteDiv);
                     });
                 }
-                // Generate combination buttons when compressed notes are available
-                if (compressedNotes.length === 6) {
-                    generateCombinationButtons();
-                } else {
-                    combinationButtonsContainer.innerHTML = '';
-                }
             };
 
-            // Function to generate the combination buttons
-            const generateCombinationButtons = () => {
+            // Function to update the buttons and pairing display
+            const updateCombinationButtonsAndRenderPairing = () => {
                 combinationButtonsContainer.innerHTML = '';
-                allGmcPairings.forEach((pairing, index) => {
-                    const button = document.createElement('button');
-                    button.classList.add('combination-button');
-                    // Prepend the index + 1 and a period to the button text
-                    button.textContent = `${index + 1}. ${pairing.family1} / ${pairing.family2}`;
-                    button.dataset.index = index;
-                    button.addEventListener('click', handleCombinationSelection);
-                    combinationButtonsContainer.appendChild(button);
-                });
+                if (compressedNotes.length === 6) {
+                    currentGmcPairings.forEach((pairing, index) => {
+                        const button = document.createElement('button');
+                        button.classList.add('combination-button');
+                        // Prepend the index + 1 and a period to the button text
+                        button.textContent = `${index + 1}. ${pairing.family1} / ${pairing.family2}`;
+                        button.dataset.index = index;
+                        button.addEventListener('click', handleCombinationSelection);
+                        combinationButtonsContainer.appendChild(button);
+                    });
+                    
+                    // Set the active button and render the pairing if an index is stored
+                    const activeBtn = combinationButtonsContainer.querySelector(`[data-index="${currentSelectedPairingIndex}"]`);
+                    if (activeBtn) {
+                        activeBtn.classList.add('active');
+                        renderPairing(currentGmcPairings[currentSelectedPairingIndex]);
+                    } else {
+                        // Reset if the old index is not valid for the new pairing set
+                        currentSelectedPairingIndex = 0;
+                        combinationButtonsContainer.querySelector(`[data-index="0"]`).classList.add('active');
+                        renderPairing(currentGmcPairings[0]);
+                    }
+
+                } else {
+                    combinationButtonsContainer.innerHTML = '';
+                    renderPairing(); // Clear the pairing display
+                }
             };
             
             // Event handler for combination buttons
@@ -490,8 +598,11 @@
                 document.querySelectorAll('.combination-button').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
 
+                // Store the selected pairing index
+                currentSelectedPairingIndex = index;
+
                 // Render the pairing for the selected combination
-                renderPairing(allGmcPairings[index]);
+                renderPairing(currentGmcPairings[index]);
             };
 
             // Event listener for mode selection
@@ -499,6 +610,20 @@
                 renderApp(event.target.value);
             });
 
+            // New event listener for triad voicing selection
+            triadVoicingSelect.addEventListener('change', (event) => {
+                const voicing = event.target.value;
+                if (voicing === 'closed') {
+                    currentGmcPairings = closedGmcPairings;
+                } else {
+                    currentGmcPairings = openGmcPairings;
+                }
+                // Re-render the combination buttons based on the new selection
+                if (compressedNotes.length === 6) {
+                    updateCombinationButtonsAndRenderPairing();
+                }
+            });
+            
             // Event listener for major scale selection
             scaleSelect.addEventListener('change', (event) => {
                 renderMajorScale(event.target.value);
@@ -519,6 +644,32 @@
                 playGroup3Notes();
             });
 
+            // Function to apply inversion based on voicing type
+            const applyInversion = (noteIndices, inversion, voicing) => {
+                if (noteIndices.length !== 3) return noteIndices; // Only apply to triads
+
+                const indicesStr = noteIndices.join(',');
+
+                if (voicing === 'closed') {
+                    if (inversion === '1') {
+                        return [noteIndices[1], noteIndices[2], noteIndices[0]];
+                    } else if (inversion === '2') {
+                        return [noteIndices[2], noteIndices[0], noteIndices[1]];
+                    }
+                } else if (voicing === 'open') {
+                    const inversions = openInversionMap[indicesStr];
+                    if (inversions) {
+                        if (inversion === '1') {
+                            return inversions.first;
+                        } else if (inversion === '2') {
+                            return inversions.second;
+                        }
+                    }
+                }
+                return noteIndices; // Return fundamental for invalid inversion/voicing
+            };
+
+
             // Function to render the pairing visualization based on a selected pairing object
             const renderPairing = (pairing = null) => {
                 group1NotesDiv.innerHTML = '';
@@ -531,23 +682,82 @@
                 if (pairing && compressedNotes.length === 6) {
                     infoMessage.style.display = 'none';
                     pairingDisplay.style.display = 'grid';
+                    const currentVoicing = triadVoicingSelect.value;
+                    
+                    // Function to render a single group of notes (or multiple for triads)
+                    const renderGroup = (notesContainer, indices, familyName, groupColor) => {
+                        notesContainer.innerHTML = ''; // Clear previous content
+                        // Check if the group is a triad.
+                        const isTriad = familyName.includes('Triada') || familyName.includes('Sus') || familyName.includes('Cluster') || familyName.includes('7th');
+                        
+                        if (isTriad) {
+                            // Define inversion names
+                            const inversionNames = ['Fundamental', '1ra inversión', '2da inversión'];
+                            
+                            // The order of rendering will change based on voicing
+                            const inversionOrder = ['0', '1', '2'];
+                            
+                            inversionOrder.forEach((inversionType, idx) => {
+                                // Create a container for each inversion that forces a new line
+                                const inversionGroup = document.createElement('div');
+                                inversionGroup.classList.add('triad-inversion-group');
+                                
+                                const titleSpan = document.createElement('span');
+                                titleSpan.classList.add('inversion-title');
+                                // Special case for open voicing, the order of names is different
+                                if (currentVoicing === 'open') {
+                                     // For open, we want to render Fundamental, then 2nd Inv, then 1st Inv
+                                     if (idx === 0) titleSpan.textContent = inversionNames[0]; // Fundamental
+                                     else if (idx === 1) titleSpan.textContent = inversionNames[2]; // 2da inversión
+                                     else if (idx === 2) titleSpan.textContent = inversionNames[1]; // 1ra inversión
+                                } else {
+                                     // Closed voicing uses the standard order
+                                     titleSpan.textContent = inversionNames[idx];
+                                }
+                                
+                                inversionGroup.appendChild(titleSpan);
 
-                    // Render the first group
-                    pairing.group1.forEach(index => {
-                        const noteDiv = document.createElement('div');
-                        noteDiv.classList.add('note-circle', 'bg-sky-700', 'border-sky-500');
-                        noteDiv.textContent = compressedNotes[index];
-                        group1NotesDiv.appendChild(noteDiv);
-                    });
+                                const notesDiv = document.createElement('div');
+                                notesDiv.classList.add('inversion-notes-row');
+
+                                // Get the correct inverted notes based on voicing logic
+                                let invertedIndices;
+                                if (currentVoicing === 'open') {
+                                     if (idx === 0) invertedIndices = indices; // Fundamental
+                                     else if (idx === 1) invertedIndices = applyInversion(indices, '2', 'open'); // 2nd Inversion
+                                     else if (idx === 2) invertedIndices = applyInversion(indices, '1', 'open'); // 1st Inversion
+                                } else {
+                                     invertedIndices = applyInversion(indices, inversionType, 'closed');
+                                }
+
+                                invertedIndices.forEach(index => {
+                                    const noteDiv = document.createElement('div');
+                                    noteDiv.classList.add('note-circle', `bg-${groupColor}-700`, `border-${groupColor}-500`);
+                                    noteDiv.textContent = compressedNotes[index];
+                                    notesDiv.appendChild(noteDiv);
+                                });
+                                inversionGroup.appendChild(notesDiv);
+                                notesContainer.appendChild(inversionGroup);
+                            });
+                        } else {
+                            // Non-triad pairings, render a single line
+                            const notesDiv = document.createElement('div');
+                            notesDiv.classList.add('note-display');
+                            indices.forEach(index => {
+                                const noteDiv = document.createElement('div');
+                                noteDiv.classList.add('note-circle', `bg-${groupColor}-700`, `border-${groupColor}-500`);
+                                noteDiv.textContent = compressedNotes[index];
+                                notesDiv.appendChild(noteDiv);
+                            });
+                            notesContainer.appendChild(notesDiv);
+                        }
+                    };
+
+                    // Render Group 1 and Group 2
+                    renderGroup(group1NotesDiv, pairing.group1, pairing.family1, 'sky');
                     group1Display.querySelector('h3').textContent = `Grupo 1: ${pairing.family1}`;
 
-                    // Render the second group
-                    pairing.group2.forEach(index => {
-                        const noteDiv = document.createElement('div');
-                        noteDiv.classList.add('note-circle', 'bg-emerald-700', 'border-emerald-500');
-                        noteDiv.textContent = compressedNotes[index];
-                        group2NotesDiv.appendChild(noteDiv);
-                    });
+                    renderGroup(group2NotesDiv, pairing.group2, pairing.family2, 'emerald');
                     group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
 
                     // Initial render of group 3
@@ -605,3 +815,4 @@
     </script>
 </body>
 </html>
+
