@@ -3,392 +3,488 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Asistencia - Cursos</title>
-    <!-- Tailwind CSS for styling -->
+    <title>Explorador GMC Interactivo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
         }
         .container {
-            max-width: 95%;
-            margin: auto;
-        }
-        /* Contenedor principal de la tabla con scroll horizontal y vertical */
-        .table-container {
-            max-height: 80vh; /* Permite desplazamiento vertical si la tabla es muy larga */
-            overflow: auto;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        table {
+            max-width: 800px;
             width: 100%;
-            min-width: 1200px; /* Asegura el scroll horizontal en pantallas pequeñas */
-            border-collapse: separate;
-            border-spacing: 0;
+            background-color: #161b22;
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+            border: 1px solid #30363d;
         }
-        th, td {
-            padding: 0.75rem;
-            text-align: center;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 0.875rem;
-            white-space: nowrap;
-            background-color: #ffffff; /* Fondo para evitar que el contenido se muestre al hacer scroll */
+        .note-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.25rem;
+            margin: 0.5rem 0;
         }
-        th {
-            background-color: #4b5563;
-            color: #ffffff;
-            font-weight: 600;
-            vertical-align: top;
-        }
-        /* La fila de encabezados se mantiene fija en la parte superior */
-        thead tr th {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background-color: #4b5563; /* Fondo para que no sea transparente */
-        }
-        /* La celda de la esquina superior izquierda se fija en ambas direcciones */
-        thead th:first-child {
-            left: 0;
-            z-index: 21;
-            box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1); /* Sombra para resaltar */
-        }
-        /* La primera columna de datos se mantiene fija a la izquierda */
-        tbody tr td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 10;
-            text-align: left;
-            font-weight: bold;
-            background-color: #f9fafb; /* Fondo para que no sea transparente */
-            box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
-        }
-        tr:last-child td {
-            border-bottom: none;
-        }
-        .alert-row {
-            background-color: #fee2e2;
-        }
-        .tab-button {
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem 0.5rem 0 0;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-        .tab-button.active {
-            background-color: #4b5563;
-            color: #ffffff;
-        }
-        .tab-button:not(.active) {
-            background-color: #d1d5db;
-            color: #4b5563;
-        }
-        .attendance-input {
+        .note-circle {
+            background-color: #21262d;
+            border: 2px solid #30363d;
+            border-radius: 50%;
+            width: 2.2rem;
+            height: 2.2rem;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
-            padding: 0.25rem 0;
-        }
-        .attendance-input label {
-            display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            font-size: 0.6rem;
+            line-height: 0.8;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 2px 4px rgba(0, 0, 0, 0.1);
+            color: #c9d1d9;
+            text-align: center;
         }
-        .message-box {
-            position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            background-color: #4CAF50;
-            color: white;
+        .note-circle.selectable {
+            cursor: pointer;
+        }
+        .note-circle.selectable.selected {
+            background-color: #58a6ff;
+            border-color: #58a6ff;
+            color: #161b22;
+        }
+        .note-circle.root {
+            background-color: #8c2a2a;
+            border-color: #d13030;
+        }
+        .note-circle.compressed {
+            background-color: #2b7473;
+            border-color: #449292;
+        }
+        .note-circle.uncompressed {
+            background-color: #30363d;
+            border-color: #444c56;
+        }
+        .combination-button {
+            background-color: #21262d;
+            border: 2px solid #30363d;
+            color: #c9d1d9;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            user-select: none;
+        }
+        .combination-button:hover:not(.active) {
+            background-color: #30363d;
+            transform: translateY(-2px);
+        }
+        .combination-button.active {
+            background-color: #1a425a;
+            border-color: #58a6ff;
+            transform: scale(1.05);
+        }
+        .pairing-display {
+            display: none;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        @media (min-width: 640px) {
+            .pairing-display {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .pairing-display .note-group {
+            background-color: #0d1117;
             padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: opacity 0.3s ease;
+            border-radius: 0.75rem;
+            border: 1px solid #30363d;
         }
     </style>
 </head>
-<body class="bg-gray-100 p-4 sm:p-8">
-    <div class="container max-w-screen-2xl bg-white shadow-xl rounded-xl p-4 sm:p-8 mt-4">
-        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-gray-800">Control de Asistencia de Clases</h1>
+<body class="bg-gray-900 text-gray-200">
 
-        <!-- Tab Navigation -->
-        <div class="flex justify-center mb-8">
-            <button id="tab-1" class="tab-button active">CMS XX y XXI I</button>
-            <button id="tab-2" class="tab-button">CMS XX y XXI II</button>
+    <div class="container">
+        <h1 class="text-xl sm:text-2xl font-bold text-center mb-2 text-cyan-400">Explorador GMC Interactivo</h1>
+        <p class="text-center text-xs sm:text-sm text-gray-400 mb-2">Diseñado por: Juan Miguel Ríos Redondo</p>
+        <p class="text-center text-xs sm:text-sm text-gray-400 mb-4">
+            Explora de forma interactiva el concepto de "Generic Modality Compression" (GMC) del libro *Creative Chordal Harmony for Guitar*.
+        </p>
+
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-4">
+            <label for="modeSelect" class="text-sm font-semibold">Modo:</label>
+            <select id="modeSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600">
+                <option value="major">Escala Mayor</option>
+                <option value="custom">Escala Personalizada</option>
+            </select>
+        </div>
+
+        <!-- Major Scale Selection Mode -->
+        <div id="majorMode" class="text-center mb-4">
+            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 1: Selecciona la Tonalidad</h2>
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-4">
+                <select id="scaleSelect" class="bg-gray-700 text-white text-xs p-1 rounded-lg border border-gray-600">
+                    <option value="C">Do Mayor</option>
+                    <option value="C#">Do# Mayor</option>
+                    <option value="D">Re Mayor</option>
+                    <option value="D#">Re# Mayor</option>
+                    <option value="E">Mi Mayor</option>
+                    <option value="F">Fa Mayor</option>
+                    <option value="F#">Fa# Mayor</option>
+                    <option value="G">Sol Mayor</option>
+                    <option value="G#">Sol# Mayor</option>
+                    <option value="A">La Mayor</option>
+                    <option value="A#">La# Mayor</option>
+                    <option value="B">Si Mayor</option>
+                </select>
+            </div>
+            <p class="text-xs">La escala de <span id="scaleName">Do Mayor</span> contiene siete notas:</p>
+            <div id="originalNotes" class="note-display"></div>
+        </div>
+
+        <!-- Custom Scale Selection Mode -->
+        <div id="customMode" class="text-center mb-4 hidden">
+            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 1: Selecciona las notas</h2>
+            <p id="selectionMessage" class="text-xs text-gray-500">Selecciona 7 notas en el orden deseado. La primera nota será la raíz.</p>
+            <div id="selectableNotes" class="note-display"></div>
+        </div>
+
+        <div class="text-center mb-4 hidden" id="step2Section">
+            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 2: La Escala Comprimida</h2>
+            <p class="text-xs text-gray-400">La nota raíz (<span id="rootNote"></span>) ha sido removida, dejando las siguientes notas:</p>
+            <div id="compressedNotesDisplay" class="note-display"></div>
+        </div>
+
+        <!-- NEW Step 3 Section for direct combination selection -->
+        <div class="text-center mb-4 hidden" id="step3Section">
+            <h2 class="text-lg sm:text-xl font-semibold mb-1">Paso 3: Selecciona una combinación</h2>
+            <div id="combinationButtons" class="flex flex-wrap justify-center gap-2 mb-2">
+                <!-- Buttons will be generated dynamically here -->
+            </div>
+            <button id="resetBtn" class="bg-gray-600 text-white text-xs py-1 px-3 rounded-full hover:bg-gray-500 transition-colors">Reiniciar</button>
         </div>
         
-        <h2 id="courseTitle" class="text-2xl font-bold text-center mb-2 text-gray-700"></h2>
-        <div id="courseInfo" class="text-center text-gray-600 mb-4"></div>
-
-        <!-- Attendance Table -->
-        <div id="attendanceTableContainer" class="table-container">
-            <!-- Table will be rendered here by JavaScript -->
+        <div id="pairingDisplay" class="pairing-display">
+            <div id="group1" class="note-group">
+                <h3 class="text-sm font-bold mb-1"></h3>
+                <div class="note-display notes"></div>
+            </div>
+            <div id="group2" class="note-group">
+                <h3 class="text-sm font-bold mb-1"></h3>
+                <div class="note-display notes"></div>
+            </div>
         </div>
-        
-        <!-- Message box for user notifications -->
-        <div id="message-box" class="hidden message-box"></div>
+
+        <div id="infoMessage" class="mt-4 text-center">
+            <p class="text-sm text-gray-500">Selecciona una combinación para ver el emparejamiento.</p>
+        </div>
+
     </div>
 
     <script>
-        // UI Elements
-        const tableContainer = document.getElementById('attendanceTableContainer');
-        const messageBox = document.getElementById('message-box');
-        const courseTitle = document.getElementById('courseTitle');
-        const courseInfo = document.getElementById('courseInfo');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Enharmonic spellings for notes
+            const notesChromatic = [
+                { sharp: 'C', flat: 'C' },
+                { sharp: 'C#', flat: 'D♭' },
+                { sharp: 'D', flat: 'D' },
+                { sharp: 'D#', flat: 'E♭' },
+                { sharp: 'E', flat: 'E' },
+                { sharp: 'F', flat: 'F' },
+                { sharp: 'F#', flat: 'G♭' },
+                { sharp: 'G', flat: 'G' },
+                { sharp: 'G#', flat: 'A♭' },
+                { sharp: 'A', flat: 'A' },
+                { sharp: 'A#', flat: 'B♭' },
+                { sharp: 'B', flat: 'B' }
+            ];
 
-        // Show a message to the user
-        const showMessage = (text, type = 'success') => {
-            messageBox.textContent = text;
-            messageBox.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
-            messageBox.classList.remove('hidden');
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 3000);
-        };
-        
-        // Function to format names
-        const capitalizeWords = (str) => {
-            return str.toLowerCase().split(' ').map(word => {
-                return word.charAt(0).toUpperCase() + word.slice(1);
-            }).join(' ');
-        };
+            // Map English note names to their Spanish equivalents
+            const scaleNamesSpanish = {
+                'C': 'Do Mayor', 'C#': 'Do# Mayor', 'D': 'Re Mayor', 'D#': 'Re# Mayor',
+                'E': 'Mi Mayor', 'F': 'Fa Mayor', 'F#': 'Fa# Mayor', 'G': 'Sol Mayor',
+                'G#': 'Sol# Mayor', 'A': 'La Mayor', 'A#': 'La# Mayor', 'B': 'Si Mayor'
+            };
 
-        // Student data for each course
-        const studentsCursoI = [
-            "ALVARADO POLO, MARCELA", "LEAL JIMENEZ, LUIS", "MARTINEZ GUZMAN, ESTEBAN",
-            "RODRIGUEZ GONZALEZ, JESUS", "SANTAMARIA BARRAZA, MIGUEL"
-        ].map(capitalizeWords);
-        const studentsCursoII = [
-            "AGUDELO BALLESTEROS, DANIEL", "APARICIO HOYOS, ESTEBAN", "BATISTA MIRANDA, JHORMAN",
-            "ESCOBAR DE ALBA, ANGEL", "ESPARZA MERCADO, PABLO", "QUINTERO RICARDO, SANTIAGO",
-            "RODRIGUEZ LARA, NATALIA", "ROSERO SAUCEDO, THOMAS", "SUAREZ OVIEDO, CARLOS",
-            "VENDRIES CORREA, SANTIAGO"
-        ].map(capitalizeWords);
-        
-        // Specific dates for the 16 classes (omitting Oct 8th)
-        const classDates = [
-            "30-Jul", "06-Ago", "13-Ago", "20-Ago", "27-Ago", "03-Sep",
-            "10-Sep", "17-Sep", "24-Sep", "01-Oct", "15-Oct", "22-Oct",
-            "29-Oct", "05-Nov", "12-Nov", "19-Nov"
-        ];
+            // This data structure holds all 10 specific pairings provided by the user.
+            const allGmcPairings = [
+                // 1. Triada / Triada
+                { family1: 'Triad', family2: 'Triad', group1: [0, 2, 4], group2: [1, 3, 5] },
+                // 2. Triada / 7th no 5
+                { family1: 'Triad', family2: '7th no 5', group1: [3, 5, 0], group2: [2, 4, 1] },
+                // 3. Triada / 7th no 3
+                { family1: 'Triad', family2: '7th no 3', group1: [5, 0, 2], group2: [4, 1, 3] },
+                // 4. Sus4 / Sus4
+                { family1: 'Sus4', family2: 'Sus4', group1: [5, 1, 2], group2: [4, 0, 3] },
+                // 5. Sus4 / 7th no 5
+                { family1: 'Sus4', family2: '7th no 5', group1: [4, 0, 1], group2: [3, 5, 2] },
+                // 6. Sus4 / 7th no 3
+                { family1: 'Sus4', family2: '7th no 3', group1: [1, 4, 5], group2: [2, 3, 0] },
+                // 7. Cluster / Cluster
+                { family1: 'Cluster', family2: 'Cluster', group1: [2, 0, 1], group2: [4, 5, 3] },
+                // 8. Cluster / 7th no 5
+                { family1: 'Cluster', family2: '7th no 5', group1: [3, 1, 2], group2: [5, 0, 4] },
+                // 9. Cluster / 7th no 3
+                { family1: 'Cluster', family2: '7th no 3', group1: [2, 3, 4], group2: [0, 1, 5] },
+                // 10. 7th no 5 / 7th no 3
+                { family1: '7th no 5', family2: '7th no 3', group1: [0, 1, 3], group2: [5, 2, 4] }
+            ];
 
-        // Global variables for the app state
-        let activeCourse = 'CMS XX y XXI I';
-        let attendanceData = {};
+            // DOM element references
+            const modeSelect = document.getElementById('modeSelect');
+            const majorModeSection = document.getElementById('majorMode');
+            const customModeSection = document.getElementById('customMode');
+            const scaleSelect = document.getElementById('scaleSelect');
+            const scaleNameSpan = document.getElementById('scaleName');
+            const originalNotesDisplay = document.getElementById('originalNotes');
+            const selectableNotesContainer = document.getElementById('selectableNotes');
+            const selectionMessage = document.getElementById('selectionMessage');
+            const compressedNotesDisplay = document.getElementById('compressedNotesDisplay');
+            const combinationButtonsContainer = document.getElementById('combinationButtons');
+            const resetBtn = document.getElementById('resetBtn');
+            const pairingDisplay = document.getElementById('pairingDisplay');
+            const group1Display = document.getElementById('group1');
+            const group2Display = document.getElementById('group2');
+            const group1NotesDiv = group1Display.querySelector('.notes');
+            const group2NotesDiv = group2Display.querySelector('.notes');
+            const infoMessage = document.getElementById('infoMessage');
+            const step2Section = document.getElementById('step2Section');
+            const step3Section = document.getElementById('step3Section');
+            const rootNoteSpan = document.getElementById('rootNote');
 
-        // Course configuration
-        const courseConfig = {
-            'CMS XX y XXI I': {
-                students: studentsCursoI,
-                totalHours: 16 * 2,
-                alertHours: 8,
-                alertPercentage: 25,
-                title: "Conceptos de música del siglo XX y XXI I",
-                time: "2:30 p.m. a 4:30 p.m.",
-                professor: "Juan Miguel Rios Redondo"
-            },
-            'CMS XX y XXI II': {
-                students: studentsCursoII,
-                totalHours: 16 * 2,
-                alertHours: 8,
-                alertPercentage: 25,
-                title: "Conceptos de música del siglo XX y XXI II",
-                time: "4:30 p.m. a 6:30 p.m.",
-                professor: "Juan Miguel Rios Redondo"
-            }
-        };
+            // Application state
+            let compressedNotes = [];
+            let selectedCustomNotes = [];
 
-        // Function to render the table
-        const renderTable = (scrollPosition = { left: 0, top: 0 }) => {
-            const config = courseConfig[activeCourse];
-            const students = config.students;
-            const data = attendanceData[activeCourse] || {};
-            
-            // Update course title and info
-            courseTitle.textContent = config.title;
-            courseInfo.innerHTML = `<p>Docente: ${config.professor}</p><p>Horario: ${config.time}</p>`;
-
-            let tableHTML = `
-                <table class="bg-white">
-                    <thead>
-                        <tr>
-                            <th class="rounded-tl-xl">Nombre</th>
-            `;
-
-            // Add headers for each session date
-            classDates.forEach(date => {
-                tableHTML += `<th class="text-center">${date}</th>`;
-            });
-
-            tableHTML += `
-                            <th class="bg-blue-600 text-white">Total Hrs Ausencia</th>
-                            <th class="bg-blue-600 text-white">% de Ausencia</th>
-                            <th class="bg-blue-600 text-white rounded-tr-xl">
-                                <div style="white-space: normal;">% de Asistencia</div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            // Add rows for each student
-            students.forEach(student => {
-                let totalAbsenceHours = 0;
-                let isAlert = false;
-                let rowContent = '';
-
-                // Get attendance status for each session
-                classDates.forEach(date => {
-                    const studentData = data[date] && data[date][student] ? data[date][student] : { present: true, tardy: false, absent: false };
-                    
-                    let sessionAbsenceHours = 0;
-                    if (studentData.absent) {
-                        sessionAbsenceHours = 2; // 2 hours for full absence
-                    } else if (studentData.tardy) {
-                        sessionAbsenceHours = 1; // 1 hour for tardy/early leave
-                    }
-                    totalAbsenceHours += sessionAbsenceHours;
-
-                    rowContent += `
-                        <td>
-                            <div class="attendance-input">
-                                <label>
-                                    <input type="checkbox" name="${student}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'present', this.checked)"
-                                        ${studentData.present ? 'checked' : ''} class="form-checkbox h-4 w-4 text-green-500 rounded focus:ring-green-400"> Presente
-                                </label>
-                                <label>
-                                    <input type="checkbox" name="${student}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'tardy', this.checked)"
-                                        ${studentData.tardy ? 'checked' : ''} class="form-checkbox h-4 w-4 text-yellow-500 rounded focus:ring-yellow-400"> Tarde (1h)
-                                </label>
-                                <label>
-                                    <input type="checkbox" name="${student}-${date}"
-                                        onchange="updateAttendance('${activeCourse}', '${date}', '${student}', 'absent', this.checked)"
-                                        ${studentData.absent ? 'checked' : ''} class="form-checkbox h-4 w-4 text-red-500 rounded focus:ring-red-400"> Falta (2h)
-                                </label>
-                            </div>
-                        </td>
-                    `;
-                });
-
-                // Calculate percentage and check for alerts
-                const percentageAbsence = config.totalHours > 0 ? ((totalAbsenceHours / config.totalHours) * 100).toFixed(2) : 0;
-                const percentageAttendance = (100 - percentageAbsence).toFixed(2);
-                if (totalAbsenceHours >= config.alertHours || percentageAbsence >= config.alertPercentage) {
-                    isAlert = true;
+            // Main render function based on the selected mode
+            const renderApp = (mode) => {
+                // Reset state
+                selectedCustomNotes = [];
+                document.querySelectorAll('.combination-button').forEach(button => button.classList.remove('active'));
+                document.querySelectorAll('.note-circle.selectable').forEach(btn => btn.classList.remove('selected'));
+                renderPairing();
+                
+                if (mode === 'major') {
+                    majorModeSection.classList.remove('hidden');
+                    customModeSection.classList.add('hidden');
+                    renderMajorScale(scaleSelect.value);
+                } else if (mode === 'custom') {
+                    majorModeSection.classList.add('hidden');
+                    customModeSection.classList.remove('hidden');
+                    renderCustomScale();
                 }
-
-                tableHTML += `
-                    <tr class="${isAlert ? 'alert-row' : ''}">
-                        <td class="font-bold name-col">${student}</td>
-                        ${rowContent}
-                        <td class="font-bold">${totalAbsenceHours}</td>
-                        <td class="font-bold">${percentageAbsence}%</td>
-                        <td class="font-bold">${percentageAttendance}%</td>
-                    </tr>
-                `;
-            });
-
-            tableHTML += `
-                        </tbody>
-                    </table>
-            `;
-
-            tableContainer.innerHTML = tableHTML;
-            
-            // Restore scroll position after a slight delay
-            setTimeout(() => {
-                tableContainer.scrollLeft = scrollPosition.left;
-                tableContainer.scrollTop = scrollPosition.top;
-            }, 50);
-        };
-
-        // Save data to localStorage
-        const saveData = () => {
-            try {
-                localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
-                showMessage('Asistencia guardada automáticamente en tu navegador.');
-            } catch (e) {
-                console.error("Error saving to local storage: ", e);
-                showMessage('Error al guardar la asistencia.', 'error');
-            }
-        };
-
-        // Load data from localStorage
-        const loadData = () => {
-            try {
-                const savedData = localStorage.getItem('attendanceData');
-                if (savedData) {
-                    attendanceData = JSON.parse(savedData);
-                } else {
-                    attendanceData = {};
-                }
-            } catch (e) {
-                console.error("Error loading from local storage: ", e);
-                attendanceData = {};
-            }
-            renderTable();
-        };
-
-        // Update attendance data
-        const updateAttendance = (course, date, student, type, checked) => {
-            // Get the current scroll position before re-rendering
-            const scrollPosition = {
-                left: tableContainer.scrollLeft,
-                top: tableContainer.scrollTop
             };
             
-            // Ensure data structure exists
-            const currentData = attendanceData[course] || {};
-            const dateData = currentData[date] || {};
-            const studentData = dateData[student] || { present: true, tardy: false, absent: false };
+            // Function to generate a major scale from a root note
+            const generateMajorScale = (rootNote) => {
+                const notesChromaticFlat = notesChromatic.map(n => n.sharp);
+                const rootIndex = notesChromaticFlat.indexOf(rootNote);
+                const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
+                return scaleSteps.map(step => notesChromaticFlat[(rootIndex + step) % 12]);
+            };
+
+            // Renders the major scale view
+            const renderMajorScale = (rootNote) => {
+                const currentScale = generateMajorScale(rootNote);
+                compressedNotes = currentScale.slice(1);
+                
+                originalNotesDisplay.innerHTML = '';
+                currentScale.forEach((note, index) => {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.classList.add('note-circle');
+                    if (index === 0) {
+                        noteDiv.classList.add('root');
+                    } else {
+                        noteDiv.classList.add('uncompressed');
+                    }
+                    noteDiv.textContent = note;
+                    originalNotesDisplay.appendChild(noteDiv);
+                });
+                
+                // Update scale name in text
+                scaleNameSpan.textContent = scaleNamesSpanish[rootNote] || `${rootNote} Mayor`;
+                
+                // Show step 2 and 3 sections
+                step2Section.classList.remove('hidden');
+                step3Section.classList.remove('hidden');
+                rootNoteSpan.textContent = rootNote;
+                
+                updateCompressedNotesDisplay();
+                renderPairing();
+            };
+
+            // Renders the custom scale view
+            const renderCustomScale = () => {
+                selectableNotesContainer.innerHTML = '';
+                notesChromatic.forEach(note => {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.classList.add('note-circle', 'selectable');
+                    if (note.sharp === note.flat) {
+                        noteDiv.textContent = note.sharp;
+                    } else {
+                        noteDiv.innerHTML = `${note.sharp}<br/>${note.flat}`;
+                    }
+                    
+                    noteDiv.dataset.sharp = note.sharp;
+                    noteDiv.addEventListener('click', handleCustomNoteSelection);
+                    selectableNotesContainer.appendChild(noteDiv);
+                });
+                updateAppCustom();
+            };
+
+            // Handle custom note selection click
+            const handleCustomNoteSelection = (event) => {
+                const noteDiv = event.currentTarget;
+                const note = noteDiv.dataset.sharp;
+                const index = selectedCustomNotes.indexOf(note);
+
+                if (index > -1) {
+                    selectedCustomNotes.splice(index, 1);
+                    noteDiv.classList.remove('selected');
+                } else if (selectedCustomNotes.length < 7) {
+                    selectedCustomNotes.push(note);
+                    noteDiv.classList.add('selected');
+                }
+                updateAppCustom();
+            };
+
+            // Update the custom scale app logic
+            const updateAppCustom = () => {
+                // Do NOT sort selectedCustomNotes to maintain selection order
+                
+                if (selectedCustomNotes.length === 7) {
+                    selectionMessage.textContent = '¡7 notas seleccionadas!';
+                    selectionMessage.classList.remove('text-gray-500');
+                    selectionMessage.classList.add('text-green-500');
+
+                    // Set the first selected note as the root and compress the scale
+                    const currentRoot = selectedCustomNotes[0];
+                    rootNoteSpan.textContent = currentRoot;
+                    compressedNotes = selectedCustomNotes.slice(1);
+                    
+                    // Show the next steps
+                    step2Section.classList.remove('hidden');
+                    step3Section.classList.remove('hidden');
+
+                    updateCompressedNotesDisplay();
+                    renderPairing();
+                    
+                } else {
+                    compressedNotes = [];
+                    step2Section.classList.add('hidden');
+                    step3Section.classList.add('hidden');
+                    selectionMessage.textContent = `Selecciona 7 notas en el orden deseado. La primera nota será la raíz. (${selectedCustomNotes.length}/7)`;
+                    selectionMessage.classList.remove('text-green-500');
+                    selectionMessage.classList.add('text-gray-500');
+                    renderPairing();
+                }
+            };
+
+            // Function to render the compressed notes
+            const updateCompressedNotesDisplay = () => {
+                compressedNotesDisplay.innerHTML = '';
+                if (compressedNotes.length > 0) {
+                    compressedNotes.forEach(note => {
+                        const noteDiv = document.createElement('div');
+                        noteDiv.classList.add('note-circle', 'compressed');
+                        noteDiv.textContent = note;
+                        compressedNotesDisplay.appendChild(noteDiv);
+                    });
+                }
+                // Generate combination buttons when compressed notes are available
+                if (compressedNotes.length === 6) {
+                    generateCombinationButtons();
+                } else {
+                    combinationButtonsContainer.innerHTML = '';
+                }
+            };
+
+            // Function to generate the combination buttons
+            const generateCombinationButtons = () => {
+                combinationButtonsContainer.innerHTML = '';
+                allGmcPairings.forEach((pairing, index) => {
+                    const button = document.createElement('button');
+                    button.classList.add('combination-button');
+                    // Prepend the index + 1 and a period to the button text
+                    button.textContent = `${index + 1}. ${pairing.family1} / ${pairing.family2}`;
+                    button.dataset.index = index;
+                    button.addEventListener('click', handleCombinationSelection);
+                    combinationButtonsContainer.appendChild(button);
+                });
+            };
             
-            // Uncheck other options
-            studentData.present = false;
-            studentData.tardy = false;
-            studentData.absent = false;
-            
-            // Set the new status based on the checked checkbox
-            if (checked) {
-                studentData[type] = true;
-            } else {
-                studentData.present = true; // Default to present if nothing is checked
-            }
+            // Event handler for combination buttons
+            const handleCombinationSelection = (event) => {
+                const button = event.target;
+                const index = parseInt(button.dataset.index);
 
-            // Update the local state
-            dateData[student] = studentData;
-            currentData[date] = dateData;
-            attendanceData[course] = currentData;
-            
-            // Save the updated data
-            saveData();
-            // Re-render table and pass the scroll position to restore it
-            renderTable(scrollPosition);
-        };
+                // Deactivate all other buttons and activate the selected one
+                document.querySelectorAll('.combination-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
 
-        window.updateAttendance = updateAttendance;
+                // Render the pairing for the selected combination
+                renderPairing(allGmcPairings[index]);
+            };
 
-        // Switch between courses
-        const switchCourse = (course) => {
-            activeCourse = course;
-            document.getElementById('tab-1').classList.toggle('active', course === 'CMS XX y XXI I');
-            document.getElementById('tab-2').classList.toggle('active', course === 'CMS XX y XXI II');
-            renderTable();
-        };
+            // Event listener for mode selection
+            modeSelect.addEventListener('change', (event) => {
+                renderApp(event.target.value);
+            });
 
-        // Tab functionality
-        document.getElementById('tab-1').addEventListener('click', () => switchCourse('CMS XX y XXI I'));
-        document.getElementById('tab-2').addEventListener('click', () => switchCourse('CMS XX y XXI II'));
+            // Event listener for major scale selection
+            scaleSelect.addEventListener('change', (event) => {
+                renderMajorScale(event.target.value);
+            });
 
-        // Initial load
-        window.onload = loadData;
+            // Reset button handler
+            resetBtn.addEventListener('click', () => {
+                renderApp(modeSelect.value);
+            });
+
+            // Function to render the pairing visualization based on a selected pairing object
+            const renderPairing = (pairing = null) => {
+                group1NotesDiv.innerHTML = '';
+                group2NotesDiv.innerHTML = '';
+                pairingDisplay.style.display = 'none';
+                infoMessage.style.display = 'block';
+                infoMessage.innerHTML = `<p class="text-sm text-gray-500">Selecciona una combinación para ver el emparejamiento.</p>`;
+
+                if (pairing && compressedNotes.length === 6) {
+                    infoMessage.style.display = 'none';
+                    pairingDisplay.style.display = 'grid';
+
+                    // Render the first group
+                    pairing.group1.forEach(index => {
+                        const noteDiv = document.createElement('div');
+                        noteDiv.classList.add('note-circle', 'bg-sky-700', 'border-sky-500');
+                        noteDiv.textContent = compressedNotes[index];
+                        group1NotesDiv.appendChild(noteDiv);
+                    });
+                    group1Display.querySelector('h3').textContent = `Grupo 1: ${pairing.family1}`;
+
+                    // Render the second group
+                    pairing.group2.forEach(index => {
+                        const noteDiv = document.createElement('div');
+                        noteDiv.classList.add('note-circle', 'bg-emerald-700', 'border-emerald-500');
+                        noteDiv.textContent = compressedNotes[index];
+                        group2NotesDiv.appendChild(noteDiv);
+                    });
+                    group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
+                }
+            };
+
+            // Initialize the app with the major scale view
+            renderApp(modeSelect.value);
+        });
     </script>
 </body>
 </html>
-
-
