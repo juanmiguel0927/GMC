@@ -37,7 +37,7 @@
         .note-display.horizontal-scroll {
             flex-wrap: nowrap;
             overflow-x: auto;
-            justify-content: flex-start;
+            justify-content: center;
         }
         .note-circle {
             background-color: #21262d;
@@ -76,6 +76,15 @@
         .note-circle.uncompressed {
             background-color: #30363d;
             border-color: #444c56;
+        }
+        /* Group-specific colors */
+        .note-circle.group1-note {
+            background-color: #0c4a6e; /* sky-800 */
+            border-color: #38bdf8; /* sky-400 */
+        }
+        .note-circle.group2-note {
+            background-color: #065f46; /* emerald-800 */
+            border-color: #34d399; /* emerald-400 */
         }
         .combination-button {
             background-color: #21262d;
@@ -155,13 +164,14 @@
             font-size: 1.25rem;
         }
         .note-circle.active-note {
-            background-color: #58a6ff;
+            background-color: #facc15; /* yellow-400 for highlight */
             color: #161b22;
-            box-shadow: 0 0 15px 5px rgba(88, 166, 255, 0.7);
+            border-color: #fde047;
+            box-shadow: 0 0 15px 5px rgba(250, 204, 21, 0.7);
             transform: scale(1.1);
         }
 
-        /* Fretboard Visualizer Styles from Pentatonica.html */
+        /* Fretboard Visualizer Styles */
         .visualizer-container {
             background-color: #0d1117;
             padding: 1rem 0;
@@ -173,7 +183,7 @@
         .fretboard-area {
             display: flex;
             align-items: center;
-            padding: 0 1rem; /* Padding for small screens */
+            padding: 0 1rem;
         }
         .open-strings {
             display: flex;
@@ -210,7 +220,7 @@
         }
         .string:not(:last-child) { border-bottom: 1px solid #4a2c1a; }
         .fret {
-            width: 55px; /* Wider frets */
+            width: 55px;
             height: 100%;
             border-right: 1px solid #a0a0a0;
             position: relative;
@@ -251,7 +261,7 @@
             pointer-events: none;
         }
         .inlay-fret {
-            width: 55px; /* Match fret width */
+            width: 55px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -281,7 +291,7 @@
         .fret-numbers { margin-top: 4px; }
         .fret-numbers-wrapper { display: flex; align-items: center; }
         .fret-number {
-            width: 55px; /* fret width */
+            width: 55px;
             font-size: 0.75rem;
             color: #8b949e;
             text-align: center;
@@ -528,8 +538,8 @@
 
                 // Fret numbers container
                 const fretNumbersContainer = document.createElement('div');
-                fretNumbersContainer.className = 'fretboard-area fret-numbers'; // Reuse class for alignment, add new one for specifics
-                const openStringsSpacer = document.createElement('div'); // Spacer
+                fretNumbersContainer.className = 'fretboard-area fret-numbers';
+                const openStringsSpacer = document.createElement('div');
                 openStringsSpacer.className = 'open-strings';
                 fretNumbersContainer.appendChild(openStringsSpacer);
                 const numbersWrapper = document.createElement('div');
@@ -617,8 +627,12 @@
                 notesChromatic.forEach(note => {
                     const noteDiv = document.createElement('div');
                     noteDiv.classList.add('note-circle', 'selectable');
-                    noteDiv.dataset.note = note.sharp; 
-                    noteDiv.innerHTML = `${note.sharp}<br/>${note.flat}`;
+                    noteDiv.dataset.note = note.sharp;
+                    if (note.sharp === note.flat) {
+                        noteDiv.textContent = note.sharp;
+                    } else {
+                        noteDiv.innerHTML = `${note.sharp}<br/>${note.flat}`;
+                    }
                     
                     noteDiv.addEventListener('click', (event) => {
                         const noteDiv = event.currentTarget;
@@ -746,14 +760,13 @@
                 }
             };
             const renderPairing = (pairing = null) => {
-                // ... (Rendering logic for pairing groups, identical to original GMC file)
-                 group1NotesDiv.innerHTML = ''; group2NotesDiv.innerHTML = ''; group3NotesDiv.innerHTML = '';
+                group1NotesDiv.innerHTML = ''; group2NotesDiv.innerHTML = ''; group3NotesDiv.innerHTML = '';
                 pairingDisplay.style.display = 'none'; infoMessage.style.display = 'block';
                 infoMessage.innerHTML = `<p class="text-sm text-gray-500">Selecciona una combinación para ver el emparejamiento.</p>`;
                 if (pairing && compressedNotes.length === 6) {
                     infoMessage.style.display = 'none'; pairingDisplay.style.display = 'flex';
                     const currentVoicing = triadVoicingSelect.value;
-                    const renderGroup = (notesContainer, indices, familyName) => {
+                    const renderGroup = (notesContainer, indices, familyName, groupClass) => {
                         notesContainer.innerHTML = '';
                         const isTriad = familyName.includes('Triada') || familyName.includes('Sus') || familyName.includes('Cluster') || familyName.includes('7th');
                         if (isTriad) {
@@ -766,13 +779,23 @@
                                 const notesDiv = document.createElement('div'); notesDiv.className = 'inversion-notes-row';
                                 let invertedIndices;
                                 if (currentVoicing === 'open') { if (idx === 0) invertedIndices = indices; else if (idx === 1) invertedIndices = applyInversion(indices, '2', 'open'); else if (idx === 2) invertedIndices = applyInversion(indices, '1', 'open'); } else { invertedIndices = applyInversion(indices, inversionType, 'closed'); }
-                                invertedIndices.forEach(index => { const note = compressedNotes[index]; const noteDiv = document.createElement('div'); noteDiv.className = 'note-circle'; noteDiv.textContent = getNoteSpelling(note); noteDiv.dataset.note = note; noteDiv.addEventListener('click', () => playAndHighlightNote(note, noteDiv)); notesDiv.appendChild(noteDiv); });
+                                invertedIndices.forEach(index => { 
+                                    const note = compressedNotes[index]; 
+                                    const noteDiv = document.createElement('div'); 
+                                    noteDiv.className = `note-circle ${groupClass}`;
+                                    noteDiv.textContent = getNoteSpelling(note); 
+                                    noteDiv.dataset.note = note; 
+                                    noteDiv.addEventListener('click', () => playAndHighlightNote(note, noteDiv)); 
+                                    notesDiv.appendChild(noteDiv); 
+                                });
                                 inversionGroup.appendChild(notesDiv); notesContainer.appendChild(inversionGroup);
                             });
                         }
                     };
-                    renderGroup(group1NotesDiv, pairing.group1, pairing.family1); group1Display.querySelector('h3').textContent = `Grupo 1: ${pairing.family1}`;
-                    renderGroup(group2NotesDiv, pairing.group2, pairing.family2); group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
+                    renderGroup(group1NotesDiv, pairing.group1, pairing.family1, 'group1-note'); 
+                    group1Display.querySelector('h3').textContent = `Grupo 1: ${pairing.family1}`;
+                    renderGroup(group2NotesDiv, pairing.group2, pairing.family2, 'group2-note'); 
+                    group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
                     shuffleGroup3();
                 }
                 updateFretboardView();
@@ -800,12 +823,22 @@
                 else if (voicing === 'open') { const inversions = openInversionMap[indicesStr]; if (inversions) { if (inversion === '1') return inversions.first; else if (inversion === '2') return inversions.second; } }
                 return noteIndices;
             };
+
+            const highlightNote = (element) => {
+                 // Temporarily remove the group color class to show the highlight, then add it back
+                const originalClasses = Array.from(element.classList);
+                element.className = 'note-circle active-note';
+                setTimeout(() => {
+                    element.className = originalClasses.join(' ');
+                }, 300);
+            };
+
             const playAndHighlightNote = (note, element) => {
                 Tone.start();
                 synth.triggerAttackRelease(getPlaybackNote(note) + '4', '8n');
-                element.classList.add('active-note');
-                setTimeout(() => element.classList.remove('active-note'), 300);
+                highlightNote(element);
             };
+
             const shuffleGroup3 = () => {
                 group3NotesDiv.innerHTML = '';
                 group3NotesToPlay = [];
@@ -838,8 +871,8 @@
                 const sequence = new Tone.Sequence((time, item) => {
                     synth.triggerAttackRelease(getPlaybackNote(item.note) + '4', rhythm, time);
                     Tone.Draw.schedule(() => {
-                        item.element.classList.add('active-note');
-                        setTimeout(() => item.element.classList.remove('active-note'), Tone.Time(rhythm).toMilliseconds() * 0.9);
+                         // Use the highlight-only function to prevent double sound
+                        highlightNote(item.element);
                     }, time);
                 }, group3NotesToPlay, rhythm);
 
@@ -889,8 +922,5 @@
     </script>
 </body>
 </html>
-
-
-
 
 
