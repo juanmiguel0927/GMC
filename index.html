@@ -77,14 +77,16 @@
             background-color: #30363d;
             border-color: #444c56;
         }
-        /* Group-specific colors */
-        .note-circle.group1-note {
-            background-color: #0c4a6e; /* sky-800 */
-            border-color: #38bdf8; /* sky-400 */
+        /* Group-specific colors - Opción 1: Contraste Energético */
+        .note-circle.group1-note, .note-fixed.group1-fret-note {
+            background-color: #92400e; /* amber-800 */
+            border-color: #fbbf24; /* amber-400 */
+            color: white;
         }
-        .note-circle.group2-note {
-            background-color: #065f46; /* emerald-800 */
-            border-color: #34d399; /* emerald-400 */
+        .note-circle.group2-note, .note-fixed.group2-fret-note {
+            background-color: #4338ca; /* indigo-700 */
+            border-color: #818cf8; /* indigo-400 */
+            color: white;
         }
         .combination-button {
             background-color: #21262d;
@@ -234,7 +236,7 @@
             width: 10px;
         }
         .note-fixed {
-            color: #4a2c1a;
+            color: #161b22;
             font-size: 0.8rem;
             font-weight: bold;
             transition: all 0.2s ease-in-out;
@@ -246,11 +248,18 @@
             border-radius: 50%;
         }
         .note-fixed.in-scale {
-            background-color: #3b82f6;
-            color: white;
             transform: scale(1.1);
         }
-        .note-fixed.root { background-color: #ef4444; }
+        /* New class for a neutral "full scale" color */
+        .note-fixed.full-scale-note {
+            background-color: #1d4ed8; /* blue-700 */
+            border-color: #60a5fa; /* blue-400 */
+            color: white;
+        }
+        .note-fixed.root { 
+            background-color: #ef4444; 
+            border-color: #f87171;
+        }
         .inlay-container {
             position: absolute;
             top: 0;
@@ -558,23 +567,42 @@
                 container.appendChild(fretNumbersContainer);
             };
 
-            const updateFretboard = (containerId, rootNote, scaleNotes) => {
-                document.querySelectorAll(`#${containerId} .note-fixed`).forEach(el => el.classList.remove('in-scale', 'root'));
-                document.querySelectorAll(`#${containerId} .open-string-name`).forEach(el => el.classList.remove('in-scale', 'root'));
-                if (!scaleNotes || scaleNotes.length === 0) return;
+            const updateFretboard = (containerId, rootNote, scaleNotes, group1Notes = [], group2Notes = []) => {
                 const canonicalScaleNotes = scaleNotes.map(findCanonicalNote);
                 const canonicalRootNote = rootNote ? findCanonicalNote(rootNote) : null;
+                const canonicalGroup1 = group1Notes.map(findCanonicalNote);
+                const canonicalGroup2 = group2Notes.map(findCanonicalNote);
+
+                document.querySelectorAll(`#${containerId} .note-fixed, #${containerId} .open-string-name`).forEach(el => {
+                    el.classList.remove('in-scale', 'root', 'group1-fret-note', 'group2-fret-note', 'full-scale-note');
+                });
+
+                if (!scaleNotes || scaleNotes.length === 0) return;
+
                 const reversedTuning = [...guitarTuning].reverse();
+
                 for (let string = 0; string < 6; string++) {
+                    // Handle open strings
                     const openNoteIndex = reversedTuning[string];
                     const openNoteCanonical = SHARP_NOTES[openNoteIndex % 12];
+                    const openStringLabel = document.querySelector(`#${containerId} .open-string-name:nth-child(${string + 1})`);
+                
                     if (canonicalScaleNotes.includes(openNoteCanonical)) {
-                        const openStringLabel = document.querySelector(`#${containerId} .open-string-name:nth-child(${string + 1})`);
                         if (openStringLabel) {
                             openStringLabel.classList.add('in-scale');
+                             // Color logic for open strings - though less visible, good for consistency
+                             if (canonicalGroup1.length > 0 && canonicalGroup1.includes(openNoteCanonical)) {
+                                openStringLabel.classList.add('group1-fret-note');
+                             } else if (canonicalGroup2.length > 0 && canonicalGroup2.includes(openNoteCanonical)) {
+                                openStringLabel.classList.add('group2-fret-note');
+                             } else {
+                                openStringLabel.classList.add('full-scale-note');
+                             }
                             if (openNoteCanonical === canonicalRootNote) openStringLabel.classList.add('root');
                         }
                     }
+
+                    // Handle fretted notes
                     for (let fret = 1; fret < 16; fret++) {
                         const currentNoteIndex = (openNoteIndex + fret) % 12;
                         const currentNoteCanonical = SHARP_NOTES[currentNoteIndex];
@@ -584,7 +612,17 @@
                             noteEl.textContent = getNoteSpelling(currentNoteCanonical);
                             if (canonicalScaleNotes.includes(currentNoteCanonical)) {
                                 noteEl.classList.add('in-scale');
-                                if (currentNoteCanonical === canonicalRootNote) noteEl.classList.add('root');
+                                // Color logic for fretted notes
+                                if (canonicalGroup1.length > 0 && canonicalGroup1.includes(currentNoteCanonical)) {
+                                    noteEl.classList.add('group1-fret-note');
+                                } else if (canonicalGroup2.length > 0 && canonicalGroup2.includes(currentNoteCanonical)) {
+                                    noteEl.classList.add('group2-fret-note');
+                                } else {
+                                    noteEl.classList.add('full-scale-note');
+                                }
+                                if (currentNoteCanonical === canonicalRootNote) {
+                                    noteEl.classList.add('root');
+                                }
                             }
                         }
                     }
@@ -595,6 +633,8 @@
                 const view = fretboardControls.querySelector('input:checked').value;
                 let notesToShow = [];
                 let rootToShow = null;
+                let group1Notes = [];
+                let group2Notes = [];
 
                 switch(view) {
                     case 'full':
@@ -604,21 +644,27 @@
                     case 'compressed':
                         notesToShow = compressedNotes;
                         rootToShow = currentRootNote;
+                        if(currentSelectedPairingIndex > -1 && compressedNotes.length === 6){
+                            group1Notes = currentGmcPairings[currentSelectedPairingIndex].group1.map(i => compressedNotes[i]);
+                            group2Notes = currentGmcPairings[currentSelectedPairingIndex].group2.map(i => compressedNotes[i]);
+                        }
                         break;
                     case 'group1':
-                        if(currentSelectedPairingIndex > -1){
+                        if(currentSelectedPairingIndex > -1 && compressedNotes.length === 6){
                             notesToShow = currentGmcPairings[currentSelectedPairingIndex].group1.map(i => compressedNotes[i]);
+                            group1Notes = [...notesToShow]; // All notes to show are group 1
                             rootToShow = notesToShow[0];
                         }
                         break;
                     case 'group2':
-                         if(currentSelectedPairingIndex > -1){
+                         if(currentSelectedPairingIndex > -1 && compressedNotes.length === 6){
                             notesToShow = currentGmcPairings[currentSelectedPairingIndex].group2.map(i => compressedNotes[i]);
+                            group2Notes = [...notesToShow]; // All notes to show are group 2
                             rootToShow = notesToShow[0];
                         }
                         break;
                 }
-                updateFretboard('fretboard-container', rootToShow, notesToShow);
+                updateFretboard('fretboard-container', rootToShow, notesToShow, group1Notes, group2Notes);
             };
 
             // RENDER & UPDATE FUNCTIONS
@@ -825,7 +871,6 @@
             };
 
             const highlightNote = (element) => {
-                 // Temporarily remove the group color class to show the highlight, then add it back
                 const originalClasses = Array.from(element.classList);
                 element.className = 'note-circle active-note';
                 setTimeout(() => {
@@ -846,7 +891,6 @@
                 const noteCount = parseInt(noteCountSelect.value) || 6;
                 if (allNotes.length < 1) return;
 
-                // Shuffle the array of all compressed notes
                 for (let i = allNotes.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [allNotes[i], allNotes[j]] = [allNotes[j], allNotes[i]];
@@ -863,23 +907,21 @@
                 if (group3NotesToPlay.length === 0) return;
                 
                 Tone.start(); 
-                Tone.Transport.stop(); // Stop any previous playback
-                Tone.Transport.cancel(); // Clear scheduled events
+                Tone.Transport.stop();
+                Tone.Transport.cancel();
 
                 const rhythm = rhythmSelect.value; 
 
                 const sequence = new Tone.Sequence((time, item) => {
                     synth.triggerAttackRelease(getPlaybackNote(item.note) + '4', rhythm, time);
                     Tone.Draw.schedule(() => {
-                         // Use the highlight-only function to prevent double sound
                         highlightNote(item.element);
                     }, time);
                 }, group3NotesToPlay, rhythm);
 
-                sequence.loop = false; // Ensure it does not loop
+                sequence.loop = false;
                 sequence.start(0);
 
-                // Schedule the transport to stop after the sequence is finished
                 const totalDuration = group3NotesToPlay.length * Tone.Time(rhythm).toSeconds();
                 Tone.Transport.scheduleOnce(() => {
                     Tone.Transport.stop();
@@ -890,10 +932,8 @@
 
             // INITIALIZATION
             const init = () => {
-                // Set initial note spellings to sharp
                 notesChromatic.forEach(note => { noteSpellings[note.sharp] = note.sharp; });
                 
-                // Set up event listeners
                 modeSelect.addEventListener('change', e => { currentSelectedPairingIndex = -1; renderApp(e.target.value); });
                 triadVoicingSelect.addEventListener('change', e => {
                     currentGmcPairings = e.target.value === 'closed' ? closedGmcPairings : openGmcPairings;
@@ -912,7 +952,6 @@
                 playGroup3Btn.addEventListener('click', playGroup3Notes);
                 fretboardControls.addEventListener('change', updateFretboardView);
                 
-                // Initial render
                 createFretboard('fretboard-container');
                 renderApp(modeSelect.value);
             };
@@ -922,5 +961,4 @@
     </script>
 </body>
 </html>
-
 
