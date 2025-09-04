@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explorador GMC Interactivo</title>
+    <title>Explorador GMC Interactivo con Mástil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
@@ -11,17 +14,15 @@
             font-family: 'Inter', sans-serif;
             background-color: #0d1117;
             color: #c9d1d9;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 1rem;
+            padding: 2rem 1rem;
         }
         .container {
-            max-width: 800px;
+            max-width: 1200px; /* Increased width for fretboard */
             width: 100%;
             background-color: #161b22;
-            padding: 1rem;
+            padding: 1.5rem;
             border-radius: 1rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
             border: 1px solid #30363d;
@@ -59,9 +60,6 @@
             user-select: none;
             cursor: pointer;
         }
-        .note-circle.selectable {
-            cursor: pointer;
-        }
         .note-circle.selectable.selected {
             background-color: #58a6ff;
             border-color: #58a6ff;
@@ -89,7 +87,6 @@
             font-size: 0.8rem;
             transition: all 0.2s ease-in-out;
             cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             user-select: none;
         }
         .combination-button:hover:not(.active) {
@@ -129,7 +126,6 @@
         }
         .inversion-title {
             font-size: 0.75rem;
-            font-weight: normal;
             margin-bottom: 0.2rem;
             color: #8b949e;
         }
@@ -147,27 +143,16 @@
             font-size: 0.8rem;
             transition: all 0.2s ease-in-out;
             cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            user-select: none;
             border: none;
         }
         .play-button:hover {
             background-color: #047857;
-            transform: translateY(-2px);
         }
         h1 {
             font-size: 1.75rem;
-            line-height: 2.25rem;
-        }
-        @media (min-width: 640px) {
-            h1 { font-size: 2rem; line-height: 2.5rem; }
         }
         h2 {
             font-size: 1.25rem;
-            line-height: 1.75rem;
-        }
-        @media (min-width: 640px) {
-            h2 { font-size: 1.5rem; line-height: 2rem; }
         }
         .note-circle.active-note {
             background-color: #58a6ff;
@@ -175,9 +160,135 @@
             box-shadow: 0 0 15px 5px rgba(88, 166, 255, 0.7);
             transform: scale(1.1);
         }
+
+        /* Fretboard Visualizer Styles from Pentatonica.html */
+        .visualizer-container {
+            background-color: #0d1117;
+            padding: 1rem 0;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            width: 100%;
+            overflow-x: auto;
+        }
+        .fretboard-area {
+            display: flex;
+            align-items: center;
+            padding: 0 1rem; /* Padding for small screens */
+        }
+        .open-strings {
+            display: flex;
+            flex-direction: column;
+            margin-right: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .open-string-name {
+            height: 26px; 
+            display: flex;
+            align-items: center;
+            color: #6b7280;
+            transition: color 0.3s ease;
+        }
+        .open-string-name.in-scale { color: #e5e7eb; }
+        .open-string-name.root { color: #ef4444; font-weight: 900; }
+        .fretboard-wrapper {
+            position: relative;
+            padding: 5px 0;
+            display: inline-block;
+        }
+        .fretboard {
+            background-color: #6b3e24;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #4a2c1a;
+        }
+        .string {
+            display: flex;
+            align-items: center;
+            height: 25px;
+        }
+        .string:not(:last-child) { border-bottom: 1px solid #4a2c1a; }
+        .fret {
+            width: 55px; /* Wider frets */
+            height: 100%;
+            border-right: 1px solid #a0a0a0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .fret.nut {
+            border-right: 4px solid #2d1a0e;
+            width: 10px;
+        }
+        .note-fixed {
+            color: #4a2c1a;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .note-fixed.in-scale {
+            background-color: #3b82f6;
+            color: white;
+            transform: scale(1.1);
+        }
+        .note-fixed.root { background-color: #ef4444; }
+        .inlay-container {
+            position: absolute;
+            top: 0;
+            left: 10px;
+            width: calc(100% - 10px);
+            height: 100%;
+            display: flex;
+            pointer-events: none;
+        }
+        .inlay-fret {
+            width: 55px; /* Match fret width */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .inlay-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #d1c1a9;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .inlay-dot.double {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            height: 100%; 
+            background-color: transparent;
+        }
+        .inlay-dot.double::before, .inlay-dot.double::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background-color: #d1c1a9;
+            border-radius: 50%;
+        }
+        .fret-numbers { margin-top: 4px; }
+        .fret-numbers-wrapper { display: flex; align-items: center; }
+        .fret-number {
+            width: 55px; /* fret width */
+            font-size: 0.75rem;
+            color: #8b949e;
+            text-align: center;
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body>
 
     <div class="container">
         <h1 class="font-bold text-center mb-2 text-cyan-400">Explorador GMC Interactivo</h1>
@@ -192,7 +303,6 @@
                 <option value="major">Escala Mayor</option>
                 <option value="custom">Escala Personalizada</option>
             </select>
-            <!-- Dropdown for triad voicing -->
             <label for="triadVoicingSelect" class="font-semibold">Triada:</label>
             <select id="triadVoicingSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600">
                 <option value="closed">Cerrada</option>
@@ -200,30 +310,20 @@
             </select>
         </div>
 
-        <!-- Major Scale Selection Mode -->
         <div id="majorMode" class="text-center mb-4">
             <h2 class="font-semibold mb-1">Paso 1: Selecciona la Tonalidad</h2>
             <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
                 <select id="scaleSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600">
-                    <option value="C">Do Mayor</option>
-                    <option value="C#">Do# Mayor</option>
-                    <option value="D">Re Mayor</option>
-                    <option value="D#">Re# Mayor</option>
-                    <option value="E">Mi Mayor</option>
-                    <option value="F">Fa Mayor</option>
-                    <option value="F#">Fa# Mayor</option>
-                    <option value="G">Sol Mayor</option>
-                    <option value="G#">Sol# Mayor</option>
-                    <option value="A">La Mayor</option>
-                    <option value="A#">La# Mayor</option>
-                    <option value="B">Si Mayor</option>
+                    <option value="C">Do Mayor</option><option value="C#">Do# Mayor</option><option value="D">Re Mayor</option>
+                    <option value="D#">Re# Mayor</option><option value="E">Mi Mayor</option><option value="F">Fa Mayor</option>
+                    <option value="F#">Fa# Mayor</option><option value="G">Sol Mayor</option><option value="G#">Sol# Mayor</option>
+                    <option value="A">La Mayor</option><option value="A#">La# Mayor</option><option value="B">Si Mayor</option>
                 </select>
             </div>
             <p class="text-sm">La escala de <span id="scaleName">Do Mayor</span> contiene siete notas:</p>
             <div id="originalNotes" class="note-display"></div>
         </div>
 
-        <!-- Custom Scale Selection Mode -->
         <div id="customMode" class="text-center mb-4 hidden">
             <h2 class="font-semibold mb-1">Paso 1: Selecciona las notas</h2>
             <p id="selectionMessage" class="text-sm text-gray-500">Selecciona 7 notas en el orden deseado. La primera nota será la raíz.</p>
@@ -234,50 +334,34 @@
             <h2 class="font-semibold mb-1">Paso 2: La Escala Comprimida</h2>
             <p class="text-sm text-gray-400">La nota raíz (<span id="rootNote"></span>) ha sido removida, dejando las siguientes notas:</p>
             <div id="compressedNotesDisplay" class="note-display"></div>
-            <!-- Botón para alternar la notación enarmónica -->
             <button id="toggleEnharmonicBtn" class="bg-gray-600 text-white text-sm py-1 px-3 rounded-full hover:bg-gray-500 transition-colors mt-2">
                 <span id="enharmonicBtnText">Cambiar a Bemoles</span>
             </button>
         </div>
 
-        <!-- NEW Step 3 Section for direct combination selection -->
         <div class="text-center mb-4 hidden" id="step3Section">
             <h2 class="font-semibold mb-1">Paso 3: Selecciona una combinación</h2>
-            <div id="combinationButtons" class="flex flex-wrap justify-center gap-2 mb-2">
-                <!-- Buttons will be generated dynamically here -->
-            </div>
+            <div id="combinationButtons" class="flex flex-wrap justify-center gap-2 mb-2"></div>
             <button id="resetBtn" class="bg-gray-600 text-white text-sm py-1 px-3 rounded-full hover:bg-gray-500 transition-colors">Reiniciar</button>
         </div>
         
         <div id="pairingDisplay" class="pairing-display">
-            <div id="group1" class="note-group">
-                <h3 class="text-md font-bold mb-1"></h3>
-                <div class="notes"></div>
-            </div>
-            <div id="group2" class="note-group">
-                <h3 class="text-md font-bold mb-1"></h3>
-                <div class="notes"></div>
-            </div>
+            <div id="group1" class="note-group"><h3 class="text-md font-bold mb-1"></h3><div class="notes"></div></div>
+            <div id="group2" class="note-group"><h3 class="text-md font-bold mb-1"></h3><div class="notes"></div></div>
             <div id="group3" class="note-group">
                 <h3 class="text-md font-bold mb-1">Grupo 3: Notas aleatorias</h3>
                 <div class="flex flex-col items-center gap-2">
                     <div class="flex items-center gap-2 mt-2 text-sm">
                         <label for="noteCountSelect">Número de notas:</label>
                         <select id="noteCountSelect" class="bg-gray-700 text-white text-sm p-1 w-12 rounded-lg border border-gray-600 text-center">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6" selected>6</option>
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                            <option value="4">4</option><option value="5">5</option><option value="6" selected>6</option>
                         </select>
                     </div>
                     <div class="flex items-center gap-2 mt-2 text-sm">
                         <label for="rhythmSelect">Ritmo:</label>
                         <select id="rhythmSelect" class="bg-gray-700 text-white text-sm p-1 rounded-lg border border-gray-600 text-center">
-                            <option value="4n">Negras</option>
-                            <option value="8n" selected>Corcheas</option>
-                            <option value="16n">Semicorcheas</option>
+                            <option value="4n">Negras</option><option value="8n" selected>Corcheas</option><option value="16n">Semicorcheas</option>
                         </select>
                         <button id="shuffleGroup3Btn" class="play-button bg-blue-600 hover:bg-blue-500">Aleatorio</button>
                         <button id="playGroup3Btn" class="play-button">Play</button>
@@ -286,111 +370,42 @@
                 <div class="note-display notes mt-2"></div>
             </div>
         </div>
+        <div id="infoMessage" class="mt-4 text-center"></div>
 
-        <div id="infoMessage" class="mt-4 text-center">
-            <p class="text-sm text-gray-500">Selecciona una combinación para ver el emparejamiento.</p>
+        <!-- Fretboard Section -->
+        <div id="fretboardSection" class="mt-6 border-t border-gray-700 pt-4 hidden">
+            <h2 class="font-semibold mb-2 text-center text-cyan-400">Visualizador de Mástil</h2>
+            <div id="fretboardControls" class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 mb-3 text-sm">
+                 <label><input type="radio" name="fretboardView" value="full" class="mr-1 accent-cyan-400" checked> Escala Completa</label>
+                 <label><input type="radio" name="fretboardView" value="compressed" class="mr-1 accent-cyan-400"> Escala Comprimida</label>
+                 <label><input type="radio" name="fretboardView" value="group1" class="mr-1 accent-cyan-400"> Grupo 1</label>
+                 <label><input type="radio" name="fretboardView" value="group2" class="mr-1 accent-cyan-400"> Grupo 2</label>
+            </div>
+            <div id="fretboard-container" class="visualizer-container">
+                <!-- Fretboard will be generated here by JS -->
+            </div>
         </div>
-
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Enharmonic spellings for notes
+            // DATA & CONSTANTS
             const notesChromatic = [
-                { sharp: 'C', flat: 'C', playback: 'C' },
-                { sharp: 'C#', flat: 'D♭', playback: 'Db' },
-                { sharp: 'D', flat: 'D', playback: 'D' },
-                { sharp: 'D#', flat: 'E♭', playback: 'Eb' },
-                { sharp: 'E', flat: 'E', playback: 'E' },
-                { sharp: 'F', flat: 'F', playback: 'F' },
-                { sharp: 'F#', flat: 'G♭', playback: 'Gb' },
-                { sharp: 'G', flat: 'G', playback: 'G' },
-                { sharp: 'G#', flat: 'A♭', playback: 'Ab' },
-                { sharp: 'A', flat: 'A', playback: 'A' },
-                { sharp: 'A#', flat: 'B♭', playback: 'Bb' },
-                { sharp: 'B', flat: 'B', playback: 'B' }
+                { sharp: 'C', flat: 'C', playback: 'C' }, { sharp: 'C#', flat: 'D♭', playback: 'Db' },
+                { sharp: 'D', flat: 'D', playback: 'D' }, { sharp: 'D#', flat: 'E♭', playback: 'Eb' },
+                { sharp: 'E', flat: 'E', playback: 'E' }, { sharp: 'F', flat: 'F', playback: 'F' },
+                { sharp: 'F#', flat: 'G♭', playback: 'Gb' }, { sharp: 'G', flat: 'G', playback: 'G' },
+                { sharp: 'G#', flat: 'A♭', playback: 'Ab' }, { sharp: 'A', flat: 'A', playback: 'A' },
+                { sharp: 'A#', flat: 'B♭', playback: 'Bb' }, { sharp: 'B', flat: 'B', playback: 'B' }
             ];
-            
-            // Map English note names to their Spanish equivalents
-            const scaleNamesSpanish = {
-                'C': 'Do Mayor', 'C#': 'Do# Mayor', 'D': 'Re Mayor', 'D#': 'Re# Mayor',
-                'E': 'Mi Mayor', 'F': 'Fa Mayor', 'F#': 'Fa# Mayor', 'G': 'Sol Mayor',
-                'G#': 'Sol# Mayor', 'A': 'La Mayor', 'A#': 'La# Mayor', 'B': 'Si Mayor'
-            };
+            const scaleNamesSpanish = { 'C': 'Do Mayor', 'C#': 'Do# Mayor', 'D': 'Re Mayor', 'D#': 'Re# Mayor', 'E': 'Mi Mayor', 'F': 'Fa Mayor', 'F#': 'Fa# Mayor', 'G': 'Sol Mayor', 'G#': 'Sol# Mayor', 'A': 'La Mayor', 'A#': 'La# Mayor', 'B': 'Si Mayor' };
+            const closedGmcPairings = [ { family1: 'Triada', family2: 'Triada', group1: [0, 2, 4], group2: [1, 3, 5] }, { family1: 'Triada', family2: '7th no 5', group1: [3, 5, 0], group2: [2, 4, 1] }, { family1: 'Triada', family2: '7th no 3', group1: [5, 0, 2], group2: [4, 1, 3] }, { family1: 'Sus4', family2: 'Sus4', group1: [5, 1, 2], group2: [4, 0, 3] }, { family1: 'Sus4', family2: '7th no 5', group1: [4, 0, 1], group2: [3, 5, 2] }, { family1: 'Sus4', family2: '7th no 3', group1: [1, 4, 5], group2: [2, 3, 0] }, { family1: 'Cluster', family2: 'Cluster', group1: [2, 0, 1], group2: [4, 5, 3] }, { family1: 'Cluster', family2: '7th no 5', group1: [3, 1, 2], group2: [5, 0, 4] }, { family1: 'Cluster', family2: '7th no 3', group1: [2, 3, 4], group2: [0, 1, 5] }, { family1: '7th no 5', family2: '7th no 3', group1: [0, 1, 3], group2: [5, 2, 4] } ];
+            const openGmcPairings = [ { family1: 'Triada', family2: 'Triada', group1: [0, 4, 2], group2: [1, 5, 3] }, { family1: 'Triada', family2: '7th no 5', group1: [3, 0, 5], group2: [2, 1, 4] }, { family1: 'Triada', family2: '7th no 3', group1: [5, 2, 0], group2: [4, 3, 1] }, { family1: 'Sus4', family2: 'Sus4', group1: [5, 2, 1], group2: [4, 3, 0] }, { family1: 'Sus4', family2: '7th no 5', group1: [4, 1, 0], group2: [3, 2, 1] }, { family1: 'Sus4', family2: '7th no 3', group1: [1, 5, 4], group2: [2, 0, 3] }, { family1: 'Cluster', family2: 'Cluster', group1: [2, 1, 0], group2: [4, 3, 5] }, { family1: 'Cluster', family2: '7th no 5', group1: [3, 2, 1], group2: [5, 4, 0] }, { family1: 'Cluster', family2: '7th no 3', group1: [2, 4, 3], group2: [0, 5, 1] }, { family1: '7th no 5', family2: '7th no 3', group1: [0, 3, 1], group2: [5, 4, 2] } ];
+            const openInversionMap = { '0,4,2': { fundamental: [0, 4, 2], first: [2, 0, 4], second: [4, 2, 0] }, '1,5,3': { fundamental: [1, 5, 3], first: [3, 1, 5], second: [5, 3, 1] }, '3,0,5': { fundamental: [3, 0, 5], first: [5, 3, 0], second: [0, 5, 3] }, '2,1,4': { fundamental: [2, 1, 4], first: [4, 2, 1], second: [1, 4, 2] }, '5,2,0': { fundamental: [5, 2, 0], first: [0, 5, 2], second: [2, 0, 5] }, '4,3,1': { fundamental: [4, 3, 1], first: [1, 4, 3], second: [3, 1, 4] }, '5,2,1': { fundamental: [5, 2, 1], first: [1, 5, 2], second: [2, 1, 5] }, '4,3,0': { fundamental: [4, 3, 0], first: [0, 4, 3], second: [3, 0, 4] }, '4,1,0': { fundamental: [4, 1, 0], first: [0, 4, 1], second: [1, 0, 4] }, '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] }, '1,5,4': { fundamental: [1, 5, 4], first: [4, 1, 5], second: [5, 4, 1] }, '2,0,3': { fundamental: [2, 0, 3], first: [3, 2, 0], second: [0, 3, 2] }, '2,1,0': { fundamental: [2, 1, 0], first: [0, 2, 1], second: [1, 0, 2] }, '4,3,5': { fundamental: [4, 3, 5], first: [5, 4, 3], second: [3, 5, 4] }, '5,4,0': { fundamental: [5, 4, 0], first: [0, 5, 4], second: [4, 0, 5] }, '2,4,3': { fundamental: [2, 4, 3], first: [3, 2, 4], second: [4, 3, 2] }, '0,5,1': { fundamental: [0, 5, 1], first: [1, 0, 5], second: [5, 1, 0] }, '0,3,1': { fundamental: [0, 3, 1], first: [1, 0, 3], second: [3, 1, 0] }, '5,4,2': { fundamental: [5, 4, 2], first: [2, 5, 4], second: [4, 2, 5] }, };
+            const guitarTuning = [4, 9, 2, 7, 11, 4]; // E A D G B e
+            const SHARP_NOTES = notesChromatic.map(n => n.sharp);
 
-            // This data structure holds all 10 specific pairings for CLOSED voicing.
-            const closedGmcPairings = [
-                // 1. Triad / Triad
-                { family1: 'Triada', family2: 'Triada', group1: [0, 2, 4], group2: [1, 3, 5] },
-                // 2. Triad / 7th no 5
-                { family1: 'Triada', family2: '7th no 5', group1: [3, 5, 0], group2: [2, 4, 1] },
-                // 3. Triad / 7th no 3
-                { family1: 'Triada', family2: '7th no 3', group1: [5, 0, 2], group2: [4, 1, 3] },
-                // 4. Sus4 / Sus4
-                { family1: 'Sus4', family2: 'Sus4', group1: [5, 1, 2], group2: [4, 0, 3] },
-                // 5. Sus4 / 7th no 5
-                { family1: 'Sus4', family2: '7th no 5', group1: [4, 0, 1], group2: [3, 5, 2] },
-                // 6. Sus4 / 7th no 3
-                { family1: 'Sus4', family2: '7th no 3', group1: [1, 4, 5], group2: [2, 3, 0] },
-                // 7. Cluster / Cluster
-                { family1: 'Cluster', family2: 'Cluster', group1: [2, 0, 1], group2: [4, 5, 3] },
-                // 8. Cluster / 7th no 5
-                { family1: 'Cluster', family2: '7th no 5', group1: [3, 1, 2], group2: [5, 0, 4] },
-                // 9. Cluster / 7th no 3
-                { family1: 'Cluster', family2: '7th no 3', group1: [2, 3, 4], group2: [0, 1, 5] },
-                // 10. 7th no 5 / 7th no 3
-                { family1: '7th no 5', family2: '7th no 3', group1: [0, 1, 3], group2: [5, 2, 4] }
-            ];
-
-            // This data structure holds all 10 specific pairings for OPEN voicing.
-            const openGmcPairings = [
-                // 1. Triad / Triad (numbers: 264 / 375 -> indices: [0, 4, 2] / [1, 5, 3])
-                { family1: 'Triada', family2: 'Triada', group1: [0, 4, 2], group2: [1, 5, 3] },
-                // 2. Triad / 7th no 5 (numbers: 527 / 436 -> indices: [3, 0, 5] / [2, 1, 4])
-                { family1: 'Triada', family2: '7th no 5', group1: [3, 0, 5], group2: [2, 1, 4] },
-                // 3. Triad / 7th no 3 (numbers: 742 / 653 -> indices: [5, 2, 0] / [4, 3, 1])
-                { family1: 'Triada', family2: '7th no 3', group1: [5, 2, 0], group2: [4, 3, 1] },
-                // 4. Sus4 / Sus4 (numbers: 743 / 652 -> indices: [5, 2, 1] / [4, 3, 0])
-                { family1: 'Sus4', family2: 'Sus4', group1: [5, 2, 1], group2: [4, 3, 0] },
-                // 5. Sus4 / 7th no 5 (numbers: 632 / 543 -> indices: [4, 1, 0] / [3, 2, 1])
-                { family1: 'Sus4', family2: '7th no 5', group1: [4, 1, 0], group2: [3, 2, 1] },
-                // 6. Sus4 / 7th no 3 (numbers: 376 / 425 -> indices: [1, 5, 4] / [2, 0, 3])
-                { family1: 'Sus4', family2: '7th no 3', group1: [1, 5, 4], group2: [2, 0, 3] },
-                // 7. Cluster / Cluster (numbers: 432 / 657 -> indices: [2, 1, 0] / [4, 3, 5])
-                { family1: 'Cluster', family2: 'Cluster', group1: [2, 1, 0], group2: [4, 3, 5] },
-                // 8. Cluster / 7th no 5 (numbers: 543 / 762 -> indices: [3, 2, 1] / [5, 4, 0])
-                { family1: 'Cluster', family2: '7th no 5', group1: [3, 2, 1], group2: [5, 4, 0] },
-                // 9. Cluster / 7th no 3 (numbers: 465 / 273 -> indices: [2, 4, 3] / [0, 5, 1])
-                { family1: 'Cluster', family2: '7th no 3', group1: [2, 4, 3], group2: [0, 5, 1] },
-                // 10. 7th no 5 / 7th no 3 (numbers: 253 / 764 -> indices: [0, 3, 1] / [5, 4, 2])
-                { family1: '7th no 5', family2: '7th no 3', group1: [0, 3, 1], group2: [5, 4, 2] }
-            ];
-            
-            // This map contains the correct note orders for open voicing inversions.
-            const openInversionMap = {
-                '0,4,2': { fundamental: [0, 4, 2], first: [2, 0, 4], second: [4, 2, 0] },
-                '1,5,3': { fundamental: [1, 5, 3], first: [3, 1, 5], second: [5, 3, 1] },
-                '3,0,5': { fundamental: [3, 0, 5], first: [5, 3, 0], second: [0, 5, 3] },
-                '2,1,4': { fundamental: [2, 1, 4], first: [4, 2, 1], second: [1, 4, 2] },
-                '5,2,0': { fundamental: [5, 2, 0], first: [0, 5, 2], second: [2, 0, 5] },
-                '4,3,1': { fundamental: [4, 3, 1], first: [1, 4, 3], second: [3, 1, 4] },
-                '5,2,1': { fundamental: [5, 2, 1], first: [1, 5, 2], second: [2, 1, 5] },
-                '4,3,0': { fundamental: [4, 3, 0], first: [0, 4, 3], second: [3, 0, 4] },
-                '4,1,0': { fundamental: [4, 1, 0], first: [0, 4, 1], second: [1, 0, 4] },
-                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] },
-                '1,5,4': { fundamental: [1, 5, 4], first: [4, 1, 5], second: [5, 4, 1] },
-                '2,0,3': { fundamental: [2, 0, 3], first: [3, 2, 0], second: [0, 3, 2] },
-                '2,1,0': { fundamental: [2, 1, 0], first: [0, 2, 1], second: [1, 0, 2] },
-                '4,3,5': { fundamental: [4, 3, 5], first: [5, 4, 3], second: [3, 5, 4] },
-                '3,2,1': { fundamental: [3, 2, 1], first: [1, 3, 2], second: [2, 1, 3] },
-                '5,4,0': { fundamental: [5, 4, 0], first: [0, 5, 4], second: [4, 0, 5] },
-                '2,4,3': { fundamental: [2, 4, 3], first: [3, 2, 4], second: [4, 3, 2] },
-                '0,5,1': { fundamental: [0, 5, 1], first: [1, 0, 5], second: [5, 1, 0] },
-                '0,3,1': { fundamental: [0, 3, 1], first: [1, 0, 3], second: [3, 1, 0] },
-                '5,4,2': { fundamental: [5, 4, 2], first: [2, 5, 4], second: [4, 2, 5] },
-            };
-
-            // DOM element references
+            // DOM elements
             const modeSelect = document.getElementById('modeSelect');
             const triadVoicingSelect = document.getElementById('triadVoicingSelect');
             const majorModeSection = document.getElementById('majorMode');
@@ -406,10 +421,9 @@
             const pairingDisplay = document.getElementById('pairingDisplay');
             const group1Display = document.getElementById('group1');
             const group2Display = document.getElementById('group2');
-            const group3Display = document.getElementById('group3');
             const group1NotesDiv = group1Display.querySelector('.notes');
             const group2NotesDiv = group2Display.querySelector('.notes');
-            const group3NotesDiv = group3Display.querySelector('.notes');
+            const group3NotesDiv = document.querySelector('#group3 .notes');
             const infoMessage = document.getElementById('infoMessage');
             const step2Section = document.getElementById('step2Section');
             const step3Section = document.getElementById('step3Section');
@@ -420,123 +434,184 @@
             const shuffleGroup3Btn = document.getElementById('shuffleGroup3Btn');
             const toggleEnharmonicBtn = document.getElementById('toggleEnharmonicBtn');
             const enharmonicBtnText = document.getElementById('enharmonicBtnText');
-            
-            // Initialize Tone.js Synth
-            let synth = new Tone.Synth().toDestination();
-            
+            const fretboardSection = document.getElementById('fretboardSection');
+            const fretboardControls = document.getElementById('fretboardControls');
+
             // Application state
+            let synth = new Tone.Synth().toDestination();
+            let fullScale = [];
             let compressedNotes = [];
             let selectedCustomNotes = [];
             let currentGmcPairings = closedGmcPairings;
-            let currentSelectedPairingIndex = 0;
+            let currentSelectedPairingIndex = -1;
             let currentRootNote = 'C';
             let noteSpellings = {};
+            let group3NotesToPlay = []; // State variable for group 3 notes
 
-            // Function to get the correct enharmonic spelling from the state
+            // UTILITY FUNCTIONS
             const getNoteSpelling = (note) => {
                 const noteObj = notesChromatic.find(n => n.sharp === note || n.flat === note);
                 const canonicalNote = noteObj ? noteObj.sharp : note;
                 return noteSpellings[canonicalNote] || note;
             };
-
-            // Function to find the canonical note name (the sharp version)
             const findCanonicalNote = (note) => {
                 const noteObj = notesChromatic.find(n => n.sharp === note || n.flat === note);
                 return noteObj ? noteObj.sharp : note;
             };
-
-            // Function to get the playback-compatible note name for Tone.js
             const getPlaybackNote = (note) => {
                 const noteObj = notesChromatic.find(n => n.sharp === note || n.flat === note);
                 return noteObj ? noteObj.playback : note;
             };
-
-            // Function to toggle the enharmonic spelling and trigger a re-render
-            const handleNoteEnharmonicClick = (note) => {
-                const canonicalNote = findCanonicalNote(note);
-                const noteObject = notesChromatic.find(n => n.sharp === canonicalNote);
-
-                if (noteObject.sharp !== noteObject.flat) {
-                    const currentSpelling = getNoteSpelling(note);
-                    const newSpelling = currentSpelling === noteObject.sharp ? noteObject.flat : noteObject.sharp;
-                    noteSpellings[canonicalNote] = newSpelling;
-                    renderAllNotes();
-                }
-            };
-            
-            // Central function to re-render all note display areas
-            const renderAllNotes = () => {
-                 if (modeSelect.value === 'major') {
-                    renderMajorScale(currentRootNote);
-                } else {
-                    updateAppCustom();
-                }
-            };
-
-            // Main render function based on the selected mode
-            const renderApp = (mode) => {
-                // Reset state
-                selectedCustomNotes = [];
-                currentSelectedPairingIndex = 0;
-                // Reset all note spellings to their sharp defaults
-                noteSpellings = {};
-                notesChromatic.forEach(note => {
-                    noteSpellings[note.sharp] = note.sharp;
-                });
-                
-                if (mode === 'major') {
-                    majorModeSection.classList.remove('hidden');
-                    customModeSection.classList.add('hidden');
-                    renderMajorScale(scaleSelect.value);
-                } else if (mode === 'custom') {
-                    majorModeSection.classList.add('hidden');
-                    customModeSection.classList.remove('hidden');
-                    renderCustomScale();
-                }
-            };
-            
-            // Function to generate a major scale from a root note
             const generateMajorScale = (rootNote) => {
-                const notesChromaticSharp = notesChromatic.map(n => n.sharp);
-                const rootIndex = notesChromaticSharp.indexOf(rootNote);
+                const rootIndex = SHARP_NOTES.indexOf(rootNote);
                 const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
-                return scaleSteps.map(step => notesChromaticSharp[(rootIndex + step) % 12]);
+                return scaleSteps.map(step => SHARP_NOTES[(rootIndex + step) % 12]);
             };
 
-            // Renders the major scale view
-            const renderMajorScale = (rootNote) => {
-                currentRootNote = rootNote;
-                const currentScale = generateMajorScale(rootNote);
-                compressedNotes = currentScale.slice(1);
-                
-                originalNotesDisplay.innerHTML = '';
-                currentScale.forEach((note, index) => {
-                    const noteDiv = document.createElement('div');
-                    noteDiv.classList.add('note-circle');
-                    if (index === 0) {
-                        noteDiv.classList.add('root');
-                    } else {
-                        noteDiv.classList.add('uncompressed');
-                    }
-                    noteDiv.textContent = getNoteSpelling(note);
-                    noteDiv.dataset.note = note;
-                    if (index !== 0) {
-                         noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
-                    }
-                    originalNotesDisplay.appendChild(noteDiv);
+            // FRETBOARD FUNCTIONS
+            const createFretboard = (containerId, numFrets = 15) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = ''; 
+                const area = document.createElement('div');
+                area.className = 'fretboard-area';
+                const openStringsContainer = document.createElement('div');
+                openStringsContainer.className = 'open-strings';
+                ['E', 'B', 'G', 'D', 'A', 'E'].forEach(noteName => {
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'open-string-name';
+                    nameDiv.textContent = noteName;
+                    openStringsContainer.appendChild(nameDiv);
                 });
-                
-                scaleNameSpan.textContent = scaleNamesSpanish[rootNote] || `${getNoteSpelling(rootNote)} Mayor`;
-                
-                step2Section.classList.remove('hidden');
-                step3Section.classList.remove('hidden');
-                rootNoteSpan.textContent = getNoteSpelling(rootNote);
-                
-                updateCompressedNotesDisplay();
-                updateCombinationButtonsAndRenderPairing();
+                area.appendChild(openStringsContainer);
+                const wrapper = document.createElement('div');
+                wrapper.className = 'fretboard-wrapper';
+                const fretboard = document.createElement('div');
+                fretboard.className = 'fretboard';
+                const reversedTuning = [...guitarTuning].reverse();
+                reversedTuning.forEach((openNoteIndex, stringIndex) => {
+                    const stringDiv = document.createElement('div');
+                    stringDiv.className = 'string';
+                    const nut = document.createElement('div');
+                    nut.className = 'fret nut';
+                    stringDiv.appendChild(nut);
+                    for (let i = 0; i < numFrets; i++) {
+                        const fret = document.createElement('div');
+                        fret.className = 'fret';
+                        fret.dataset.string = 5 - stringIndex;
+                        fret.dataset.fret = i + 1;
+                        const noteFixed = document.createElement('div');
+                        noteFixed.className = 'note-fixed';
+                        const noteIndex = (openNoteIndex + i + 1) % 12;
+                        noteFixed.textContent = SHARP_NOTES[noteIndex];
+                        fret.appendChild(noteFixed);
+                        stringDiv.appendChild(fret);
+                    }
+                    fretboard.appendChild(stringDiv);
+                });
+                wrapper.appendChild(fretboard);
+                const inlayContainer = document.createElement('div');
+                inlayContainer.className = 'inlay-container';
+                const markers = { 3: 'single', 5: 'single', 7: 'single', 9: 'single', 12: 'double', 15: 'single' };
+                for (let i = 1; i <= numFrets; i++) {
+                    const inlayFret = document.createElement('div');
+                    inlayFret.className = 'inlay-fret';
+                    if (markers[i]) {
+                        const dot = document.createElement('div');
+                        dot.className = `inlay-dot ${markers[i] === 'double' ? 'double' : ''}`;
+                        inlayFret.appendChild(dot);
+                    }
+                    inlayContainer.appendChild(inlayFret);
+                }
+                wrapper.appendChild(inlayContainer);
+                area.appendChild(wrapper);
+                container.appendChild(area);
+
+                // Fret numbers container
+                const fretNumbersContainer = document.createElement('div');
+                fretNumbersContainer.className = 'fretboard-area fret-numbers'; // Reuse class for alignment, add new one for specifics
+                const openStringsSpacer = document.createElement('div'); // Spacer
+                openStringsSpacer.className = 'open-strings';
+                fretNumbersContainer.appendChild(openStringsSpacer);
+                const numbersWrapper = document.createElement('div');
+                numbersWrapper.className = 'fret-numbers-wrapper';
+                const nutSpacer = document.createElement('div');
+                nutSpacer.className = 'fret nut';
+                numbersWrapper.appendChild(nutSpacer);
+                const numbersToShow = { 3: '3', 5: '5', 7: '7', 9: '9', 12: '12', 15: '15' };
+                for (let i = 1; i <= numFrets; i++) {
+                    const numberDiv = document.createElement('div');
+                    numberDiv.className = 'fret-number';
+                    numberDiv.textContent = numbersToShow[i] || '';
+                    numbersWrapper.appendChild(numberDiv);
+                }
+                fretNumbersContainer.appendChild(numbersWrapper);
+                container.appendChild(fretNumbersContainer);
             };
 
-            // Renders the custom scale view
+            const updateFretboard = (containerId, rootNote, scaleNotes) => {
+                document.querySelectorAll(`#${containerId} .note-fixed`).forEach(el => el.classList.remove('in-scale', 'root'));
+                document.querySelectorAll(`#${containerId} .open-string-name`).forEach(el => el.classList.remove('in-scale', 'root'));
+                if (!scaleNotes || scaleNotes.length === 0) return;
+                const canonicalScaleNotes = scaleNotes.map(findCanonicalNote);
+                const canonicalRootNote = rootNote ? findCanonicalNote(rootNote) : null;
+                const reversedTuning = [...guitarTuning].reverse();
+                for (let string = 0; string < 6; string++) {
+                    const openNoteIndex = reversedTuning[string];
+                    const openNoteCanonical = SHARP_NOTES[openNoteIndex % 12];
+                    if (canonicalScaleNotes.includes(openNoteCanonical)) {
+                        const openStringLabel = document.querySelector(`#${containerId} .open-string-name:nth-child(${string + 1})`);
+                        if (openStringLabel) {
+                            openStringLabel.classList.add('in-scale');
+                            if (openNoteCanonical === canonicalRootNote) openStringLabel.classList.add('root');
+                        }
+                    }
+                    for (let fret = 1; fret < 16; fret++) {
+                        const currentNoteIndex = (openNoteIndex + fret) % 12;
+                        const currentNoteCanonical = SHARP_NOTES[currentNoteIndex];
+                        const fretDiv = document.querySelector(`#${containerId} .fret[data-string='${5 - string}'][data-fret='${fret}']`);
+                        if (fretDiv) {
+                            const noteEl = fretDiv.querySelector('.note-fixed');
+                            noteEl.textContent = getNoteSpelling(currentNoteCanonical);
+                            if (canonicalScaleNotes.includes(currentNoteCanonical)) {
+                                noteEl.classList.add('in-scale');
+                                if (currentNoteCanonical === canonicalRootNote) noteEl.classList.add('root');
+                            }
+                        }
+                    }
+                }
+            };
+            
+            const updateFretboardView = () => {
+                const view = fretboardControls.querySelector('input:checked').value;
+                let notesToShow = [];
+                let rootToShow = null;
+
+                switch(view) {
+                    case 'full':
+                        notesToShow = fullScale;
+                        rootToShow = currentRootNote;
+                        break;
+                    case 'compressed':
+                        notesToShow = compressedNotes;
+                        rootToShow = currentRootNote;
+                        break;
+                    case 'group1':
+                        if(currentSelectedPairingIndex > -1){
+                            notesToShow = currentGmcPairings[currentSelectedPairingIndex].group1.map(i => compressedNotes[i]);
+                            rootToShow = notesToShow[0];
+                        }
+                        break;
+                    case 'group2':
+                         if(currentSelectedPairingIndex > -1){
+                            notesToShow = currentGmcPairings[currentSelectedPairingIndex].group2.map(i => compressedNotes[i]);
+                            rootToShow = notesToShow[0];
+                        }
+                        break;
+                }
+                updateFretboard('fretboard-container', rootToShow, notesToShow);
+            };
+
+            // RENDER & UPDATE FUNCTIONS
             const renderCustomScale = () => {
                 selectableNotesContainer.innerHTML = '';
                 notesChromatic.forEach(note => {
@@ -566,332 +641,256 @@
                 updateAppCustom();
             };
 
-            // Update the custom scale app logic
-            const updateAppCustom = () => {
-                if (selectedCustomNotes.length > 0) {
-                    currentRootNote = selectedCustomNotes[0];
-                    rootNoteSpan.textContent = getNoteSpelling(currentRootNote);
-                    compressedNotes = selectedCustomNotes.slice(1);
-                } else {
-                    currentRootNote = null;
-                    compressedNotes = [];
-                }
+            const renderApp = (mode) => {
+                // Reset state
+                selectedCustomNotes = [];
+                currentSelectedPairingIndex = -1; 
+                noteSpellings = {};
+                notesChromatic.forEach(note => {
+                    noteSpellings[note.sharp] = note.sharp;
+                });
 
+                if (mode === 'major') {
+                    majorModeSection.classList.remove('hidden');
+                    customModeSection.classList.add('hidden');
+                    renderMajorScale(scaleSelect.value);
+                } else if (mode === 'custom') {
+                    majorModeSection.classList.add('hidden');
+                    customModeSection.classList.remove('hidden');
+                    renderCustomScale();
+                }
+            };
+            
+            const renderAllNotes = () => {
+                if (modeSelect.value === 'major') renderMajorScale(currentRootNote);
+                else updateAppCustom();
+            };
+            const renderMajorScale = (rootNote) => {
+                currentRootNote = rootNote;
+                fullScale = generateMajorScale(rootNote);
+                compressedNotes = fullScale.slice(1);
+                originalNotesDisplay.innerHTML = '';
+                fullScale.forEach((note, index) => {
+                    const noteDiv = document.createElement('div');
+                    noteDiv.className = `note-circle ${index === 0 ? 'root' : 'uncompressed'}`;
+                    noteDiv.textContent = getNoteSpelling(note);
+                    noteDiv.dataset.note = note;
+                    if (index !== 0) noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
+                    originalNotesDisplay.appendChild(noteDiv);
+                });
+                scaleNameSpan.textContent = scaleNamesSpanish[rootNote] || `${getNoteSpelling(rootNote)} Mayor`;
+                step2Section.classList.remove('hidden');
+                step3Section.classList.remove('hidden');
+                fretboardSection.classList.remove('hidden');
+                rootNoteSpan.textContent = getNoteSpelling(rootNote);
+                updateCompressedNotesDisplay();
+                updateCombinationButtonsAndRenderPairing();
+            };
+            const updateAppCustom = () => {
+                currentRootNote = selectedCustomNotes.length > 0 ? selectedCustomNotes[0] : null;
+                fullScale = selectedCustomNotes;
+                compressedNotes = selectedCustomNotes.slice(1);
+                if(currentRootNote) rootNoteSpan.textContent = getNoteSpelling(currentRootNote);
                 if (selectedCustomNotes.length === 7) {
                     selectionMessage.textContent = '¡7 notas seleccionadas!';
-                    selectionMessage.classList.remove('text-gray-500');
-                    selectionMessage.classList.add('text-green-500');
+                    selectionMessage.classList.add('text-green-500', 'font-bold');
                     step2Section.classList.remove('hidden');
                     step3Section.classList.remove('hidden');
+                    fretboardSection.classList.remove('hidden');
                     updateCompressedNotesDisplay();
                     updateCombinationButtonsAndRenderPairing();
                 } else {
                     step2Section.classList.add('hidden');
                     step3Section.classList.add('hidden');
+                    fretboardSection.classList.add('hidden');
                     selectionMessage.textContent = `Selecciona 7 notas en el orden deseado. La primera nota será la raíz. (${selectedCustomNotes.length}/7)`;
-                    selectionMessage.classList.remove('text-green-500');
-                    selectionMessage.classList.add('text-gray-500');
+                    selectionMessage.classList.remove('text-green-500', 'font-bold');
                     renderPairing();
                 }
             };
-
-            // Function to render the compressed notes
             const updateCompressedNotesDisplay = () => {
                 compressedNotesDisplay.innerHTML = '';
                 if (compressedNotes.length > 0) {
                     compressedNotes.forEach(note => {
                         const noteDiv = document.createElement('div');
-                        noteDiv.classList.add('note-circle', 'compressed');
+                        noteDiv.className = 'note-circle compressed';
                         noteDiv.textContent = getNoteSpelling(note);
                         noteDiv.dataset.note = note;
                         noteDiv.addEventListener('click', () => handleNoteEnharmonicClick(note));
                         compressedNotesDisplay.appendChild(noteDiv);
                     });
                 }
+                updateFretboardView();
             };
-
-            // Function to update the buttons and pairing display
             const updateCombinationButtonsAndRenderPairing = () => {
                 combinationButtonsContainer.innerHTML = '';
                 if (compressedNotes.length === 6) {
                     currentGmcPairings.forEach((pairing, index) => {
                         const button = document.createElement('button');
-                        button.classList.add('combination-button');
+                        button.className = 'combination-button';
                         button.textContent = `${index + 1}. ${pairing.family1} / ${pairing.family2}`;
                         button.dataset.index = index;
                         button.addEventListener('click', handleCombinationSelection);
                         combinationButtonsContainer.appendChild(button);
                     });
                     
-                    const activeBtn = combinationButtonsContainer.querySelector(`[data-index="${currentSelectedPairingIndex}"]`);
-                    if (activeBtn) {
-                        activeBtn.classList.add('active');
-                        renderPairing(currentGmcPairings[currentSelectedPairingIndex]);
+                    const pairingToSelect = currentSelectedPairingIndex > -1 ? currentSelectedPairingIndex : 0;
+                    const btnToActivate = combinationButtonsContainer.querySelector(`[data-index="${pairingToSelect}"]`);
+                    if(btnToActivate){
+                        btnToActivate.click();
                     } else {
-                        currentSelectedPairingIndex = 0;
-                        const firstBtn = combinationButtonsContainer.querySelector(`[data-index="0"]`);
-                        if (firstBtn) {
-                             firstBtn.classList.add('active');
-                             renderPairing(currentGmcPairings[0]);
-                        } else {
-                             renderPairing();
-                        }
+                        renderPairing();
                     }
-
                 } else {
-                    combinationButtonsContainer.innerHTML = '';
                     renderPairing();
                 }
             };
-            
-            // Event handler for combination buttons
-            const handleCombinationSelection = (event) => {
-                const button = event.target;
-                const index = parseInt(button.dataset.index);
-
-                document.querySelectorAll('.combination-button').forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-
-                currentSelectedPairingIndex = index;
-                renderPairing(currentGmcPairings[index]);
-            };
-
-            // Event listener for enharmonic toggle button
-            toggleEnharmonicBtn.addEventListener('click', () => {
-                const currentSpelling = enharmonicBtnText.textContent;
-                const useFlatSpelling = currentSpelling === 'Cambiar a Bemoles';
-                
-                notesChromatic.forEach(note => {
-                    noteSpellings[note.sharp] = useFlatSpelling ? note.flat : note.sharp;
-                });
-                
-                enharmonicBtnText.textContent = useFlatSpelling ? 'Cambiar a Sostenidos' : 'Cambiar a Bemoles';
-                
-                renderAllNotes();
-            });
-
-            // Event listener for mode selection
-            modeSelect.addEventListener('change', (event) => {
-                renderApp(event.target.value);
-            });
-
-            // New event listener for triad voicing selection
-            triadVoicingSelect.addEventListener('change', (event) => {
-                const voicing = event.target.value;
-                if (voicing === 'closed') {
-                    currentGmcPairings = closedGmcPairings;
-                } else {
-                    currentGmcPairings = openGmcPairings;
-                }
-                if (compressedNotes.length === 6) {
-                    updateCombinationButtonsAndRenderPairing();
-                }
-            });
-            
-            // Event listener for major scale selection
-            scaleSelect.addEventListener('change', (event) => {
-                renderMajorScale(event.target.value);
-            });
-
-            // Reset button handler
-            resetBtn.addEventListener('click', () => {
-                renderApp(modeSelect.value);
-            });
-            
-            noteCountSelect.addEventListener('change', () => {
-                shuffleGroup3();
-            });
-
-            shuffleGroup3Btn.addEventListener('click', () => {
-                shuffleGroup3();
-            });
-
-            playGroup3Btn.addEventListener('click', () => {
-                playGroup3Notes();
-            });
-            
-            // Function to play a single note
-            const playSingleNote = (note) => {
-                try {
-                    Tone.start();
-                    const playbackNote = getPlaybackNote(note);
-                    synth.triggerAttackRelease(playbackNote + '4', '8n');
-                } catch (e) {
-                    console.error("Error playing note:", e);
-                    // Could add a small error message here if needed.
-                }
-            };
-
-            // Function to apply inversion based on voicing type
-            const applyInversion = (noteIndices, inversion, voicing) => {
-                if (noteIndices.length !== 3) return noteIndices;
-                const indicesStr = noteIndices.join(',');
-
-                if (voicing === 'closed') {
-                    if (inversion === '1') {
-                        return [noteIndices[1], noteIndices[2], noteIndices[0]];
-                    } else if (inversion === '2') {
-                        return [noteIndices[2], noteIndices[0], noteIndices[1]];
-                    }
-                } else if (voicing === 'open') {
-                    const inversions = openInversionMap[indicesStr];
-                    if (inversions) {
-                        if (inversion === '1') {
-                            return inversions.first;
-                        } else if (inversion === '2') {
-                            return inversions.second;
-                        }
-                    }
-                }
-                return noteIndices;
-            };
-
-            // Function to render the pairing visualization based on a selected pairing object
             const renderPairing = (pairing = null) => {
-                group1NotesDiv.innerHTML = '';
-                group2NotesDiv.innerHTML = '';
-                group3NotesDiv.innerHTML = '';
-                pairingDisplay.style.display = 'none';
-                infoMessage.style.display = 'block';
+                // ... (Rendering logic for pairing groups, identical to original GMC file)
+                 group1NotesDiv.innerHTML = ''; group2NotesDiv.innerHTML = ''; group3NotesDiv.innerHTML = '';
+                pairingDisplay.style.display = 'none'; infoMessage.style.display = 'block';
                 infoMessage.innerHTML = `<p class="text-sm text-gray-500">Selecciona una combinación para ver el emparejamiento.</p>`;
-                
                 if (pairing && compressedNotes.length === 6) {
-                    infoMessage.style.display = 'none';
-                    pairingDisplay.style.display = 'flex';
+                    infoMessage.style.display = 'none'; pairingDisplay.style.display = 'flex';
                     const currentVoicing = triadVoicingSelect.value;
-                    
-                    const renderGroup = (notesContainer, indices, familyName, groupColor) => {
+                    const renderGroup = (notesContainer, indices, familyName) => {
                         notesContainer.innerHTML = '';
                         const isTriad = familyName.includes('Triada') || familyName.includes('Sus') || familyName.includes('Cluster') || familyName.includes('7th');
-                        
                         if (isTriad) {
                             const inversionNames = ['Fundamental', '1ra inversión', '2da inversión'];
-                            const inversionOrder = ['0', '1', '2'];
-                            
-                            inversionOrder.forEach((inversionType, idx) => {
-                                const inversionGroup = document.createElement('div');
-                                inversionGroup.classList.add('triad-inversion-group');
-                                
-                                const titleSpan = document.createElement('span');
-                                titleSpan.classList.add('inversion-title');
-                                if (currentVoicing === 'open') {
-                                     if (idx === 0) titleSpan.textContent = inversionNames[0];
-                                     else if (idx === 1) titleSpan.textContent = inversionNames[2];
-                                     else if (idx === 2) titleSpan.textContent = inversionNames[1];
-                                } else {
-                                     titleSpan.textContent = inversionNames[idx];
-                                }
-                                
+                            ['0', '1', '2'].forEach((inversionType, idx) => {
+                                const inversionGroup = document.createElement('div'); inversionGroup.className = 'triad-inversion-group';
+                                const titleSpan = document.createElement('span'); titleSpan.className = 'inversion-title';
+                                if (currentVoicing === 'open') { if (idx === 0) titleSpan.textContent = inversionNames[0]; else if (idx === 1) titleSpan.textContent = inversionNames[2]; else if (idx === 2) titleSpan.textContent = inversionNames[1]; } else { titleSpan.textContent = inversionNames[idx]; }
                                 inversionGroup.appendChild(titleSpan);
-
-                                const notesDiv = document.createElement('div');
-                                notesDiv.classList.add('inversion-notes-row');
-
+                                const notesDiv = document.createElement('div'); notesDiv.className = 'inversion-notes-row';
                                 let invertedIndices;
-                                if (currentVoicing === 'open') {
-                                     if (idx === 0) invertedIndices = indices;
-                                     else if (idx === 1) invertedIndices = applyInversion(indices, '2', 'open');
-                                     else if (idx === 2) invertedIndices = applyInversion(indices, '1', 'open');
-                                } else {
-                                     invertedIndices = applyInversion(indices, inversionType, 'closed');
-                                }
-
-                                invertedIndices.forEach(index => {
-                                    const note = compressedNotes[index];
-                                    const noteDiv = document.createElement('div');
-                                    noteDiv.classList.add('note-circle', `bg-${groupColor}-700`, `border-${groupColor}-500`);
-                                    noteDiv.textContent = getNoteSpelling(note);
-                                    noteDiv.dataset.note = note;
-                                    noteDiv.addEventListener('click', () => playSingleNote(note));
-                                    notesDiv.appendChild(noteDiv);
-                                });
-                                inversionGroup.appendChild(notesDiv);
-                                notesContainer.appendChild(inversionGroup);
+                                if (currentVoicing === 'open') { if (idx === 0) invertedIndices = indices; else if (idx === 1) invertedIndices = applyInversion(indices, '2', 'open'); else if (idx === 2) invertedIndices = applyInversion(indices, '1', 'open'); } else { invertedIndices = applyInversion(indices, inversionType, 'closed'); }
+                                invertedIndices.forEach(index => { const note = compressedNotes[index]; const noteDiv = document.createElement('div'); noteDiv.className = 'note-circle'; noteDiv.textContent = getNoteSpelling(note); noteDiv.dataset.note = note; noteDiv.addEventListener('click', () => playAndHighlightNote(note, noteDiv)); notesDiv.appendChild(noteDiv); });
+                                inversionGroup.appendChild(notesDiv); notesContainer.appendChild(inversionGroup);
                             });
-                        } else {
-                            const notesDiv = document.createElement('div');
-                            notesDiv.classList.add('note-display');
-                            indices.forEach(index => {
-                                const note = compressedNotes[index];
-                                const noteDiv = document.createElement('div');
-                                noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
-                                noteDiv.textContent = getNoteSpelling(note);
-                                noteDiv.dataset.note = note;
-                                noteDiv.addEventListener('click', () => playSingleNote(note));
-                                notesDiv.appendChild(noteDiv);
-                            });
-                            notesContainer.appendChild(notesDiv);
                         }
                     };
-
-                    renderGroup(group1NotesDiv, pairing.group1, pairing.family1, 'sky');
-                    group1Display.querySelector('h3').textContent = `Grupo 1: ${pairing.family1}`;
-
-                    renderGroup(group2NotesDiv, pairing.group2, pairing.family2, 'emerald');
-                    group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
-                    
+                    renderGroup(group1NotesDiv, pairing.group1, pairing.family1); group1Display.querySelector('h3').textContent = `Grupo 1: ${pairing.family1}`;
+                    renderGroup(group2NotesDiv, pairing.group2, pairing.family2); group2Display.querySelector('h3').textContent = `Grupo 2: ${pairing.family2}`;
                     shuffleGroup3();
                 }
+                updateFretboardView();
             };
-            
+
+            // EVENT HANDLERS
+            const handleNoteEnharmonicClick = (note) => {
+                const canonicalNote = findCanonicalNote(note);
+                const noteObject = notesChromatic.find(n => n.sharp === canonicalNote);
+                if (noteObject.sharp !== noteObject.flat) {
+                    noteSpellings[canonicalNote] = getNoteSpelling(note) === noteObject.sharp ? noteObject.flat : noteObject.sharp;
+                    renderAllNotes();
+                }
+            };
+            const handleCombinationSelection = (event) => {
+                const button = event.target;
+                currentSelectedPairingIndex = parseInt(button.dataset.index);
+                document.querySelectorAll('.combination-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                renderPairing(currentGmcPairings[currentSelectedPairingIndex]);
+            };
+            const applyInversion = (noteIndices, inversion, voicing) => {
+                if (noteIndices.length !== 3) return noteIndices; const indicesStr = noteIndices.join(',');
+                if (voicing === 'closed') { if (inversion === '1') return [noteIndices[1], noteIndices[2], noteIndices[0]]; else if (inversion === '2') return [noteIndices[2], noteIndices[0], noteIndices[1]]; } 
+                else if (voicing === 'open') { const inversions = openInversionMap[indicesStr]; if (inversions) { if (inversion === '1') return inversions.first; else if (inversion === '2') return inversions.second; } }
+                return noteIndices;
+            };
+            const playAndHighlightNote = (note, element) => {
+                Tone.start();
+                synth.triggerAttackRelease(getPlaybackNote(note) + '4', '8n');
+                element.classList.add('active-note');
+                setTimeout(() => element.classList.remove('active-note'), 300);
+            };
             const shuffleGroup3 = () => {
                 group3NotesDiv.innerHTML = '';
+                group3NotesToPlay = [];
                 const allNotes = [...compressedNotes];
                 const noteCount = parseInt(noteCountSelect.value) || 6;
-                
-                if (allNotes.length < 1) {
-                    return;
-                }
+                if (allNotes.length < 1) return;
 
+                // Shuffle the array of all compressed notes
                 for (let i = allNotes.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [allNotes[i], allNotes[j]] = [allNotes[j], allNotes[i]];
                 }
-
+                
                 const notesToRender = allNotes.slice(0, noteCount);
+
                 notesToRender.forEach(note => {
-                    const noteDiv = document.createElement('div');
-                    noteDiv.classList.add('note-circle', 'bg-purple-700', 'border-purple-500');
-                    noteDiv.textContent = getNoteSpelling(note);
-                    noteDiv.dataset.note = note;
-                    noteDiv.addEventListener('click', () => {
-                        playSingleNote(note);
-                    });
-                    group3NotesDiv.appendChild(noteDiv);
+                    const noteDiv = document.createElement('div'); noteDiv.className = 'note-circle'; noteDiv.textContent = getNoteSpelling(note); noteDiv.dataset.note = note; noteDiv.addEventListener('click', () => playAndHighlightNote(note, noteDiv)); group3NotesDiv.appendChild(noteDiv);
+                    group3NotesToPlay.push({ note: note, element: noteDiv });
                 });
             };
-
             const playGroup3Notes = () => {
-                const noteElements = Array.from(group3NotesDiv.querySelectorAll('.note-circle'));
-                if (noteElements.length === 0) {
-                    return;
-                }
+                if (group3NotesToPlay.length === 0) return;
                 
-                Tone.start();
-                const rhythm = rhythmSelect.value;
-                const noteDuration = Tone.Time(rhythm).toSeconds();
-                let time = Tone.now();
-                
-                noteElements.forEach((noteElement, index) => {
-                    const note = noteElement.dataset.note;
-                    const playbackNote = getPlaybackNote(note);
-                    synth.triggerAttackRelease(playbackNote + '4', noteDuration, time);
+                Tone.start(); 
+                Tone.Transport.stop(); // Stop any previous playback
+                Tone.Transport.cancel(); // Clear scheduled events
 
-                    Tone.Transport.scheduleOnce(() => {
-                        noteElement.classList.add('active-note');
-                        Tone.Transport.scheduleOnce(() => {
-                            noteElement.classList.remove('active-note');
-                        }, `+${noteDuration}`);
+                const rhythm = rhythmSelect.value; 
+
+                const sequence = new Tone.Sequence((time, item) => {
+                    synth.triggerAttackRelease(getPlaybackNote(item.note) + '4', rhythm, time);
+                    Tone.Draw.schedule(() => {
+                        item.element.classList.add('active-note');
+                        setTimeout(() => item.element.classList.remove('active-note'), Tone.Time(rhythm).toMilliseconds() * 0.9);
                     }, time);
+                }, group3NotesToPlay, rhythm);
 
-                    time += noteDuration;
-                });
+                sequence.loop = false; // Ensure it does not loop
+                sequence.start(0);
+
+                // Schedule the transport to stop after the sequence is finished
+                const totalDuration = group3NotesToPlay.length * Tone.Time(rhythm).toSeconds();
+                Tone.Transport.scheduleOnce(() => {
+                    Tone.Transport.stop();
+                }, totalDuration);
+
                 Tone.Transport.start();
             };
 
-            renderApp(modeSelect.value);
+            // INITIALIZATION
+            const init = () => {
+                // Set initial note spellings to sharp
+                notesChromatic.forEach(note => { noteSpellings[note.sharp] = note.sharp; });
+                
+                // Set up event listeners
+                modeSelect.addEventListener('change', e => { currentSelectedPairingIndex = -1; renderApp(e.target.value); });
+                triadVoicingSelect.addEventListener('change', e => {
+                    currentGmcPairings = e.target.value === 'closed' ? closedGmcPairings : openGmcPairings;
+                    if(compressedNotes.length === 6) updateCombinationButtonsAndRenderPairing();
+                });
+                scaleSelect.addEventListener('change', e => renderMajorScale(e.target.value));
+                toggleEnharmonicBtn.addEventListener('click', () => {
+                    const useFlat = enharmonicBtnText.textContent === 'Cambiar a Bemoles';
+                    notesChromatic.forEach(note => { noteSpellings[note.sharp] = useFlat ? note.flat : note.sharp; });
+                    enharmonicBtnText.textContent = useFlat ? 'Cambiar a Sostenidos' : 'Cambiar a Bemoles';
+                    renderAllNotes();
+                });
+                resetBtn.addEventListener('click', () => { currentSelectedPairingIndex = -1; renderApp(modeSelect.value);});
+                noteCountSelect.addEventListener('change', shuffleGroup3);
+                shuffleGroup3Btn.addEventListener('click', shuffleGroup3);
+                playGroup3Btn.addEventListener('click', playGroup3Notes);
+                fretboardControls.addEventListener('change', updateFretboardView);
+                
+                // Initial render
+                createFretboard('fretboard-container');
+                renderApp(modeSelect.value);
+            };
+
+            init();
         });
     </script>
 </body>
 </html>
+
+
+
+
 
