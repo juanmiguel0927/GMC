@@ -172,6 +172,14 @@
             box-shadow: 0 0 15px 5px rgba(250, 204, 21, 0.7);
             transform: scale(1.1);
         }
+        .note-fixed.active-note {
+            background-color: #facc15; /* yellow-400 */
+            color: #161b22;
+            box-shadow: 0 0 10px 3px rgba(250, 204, 21, 0.6);
+            transform: scale(1.25);
+            position: relative; /* to ensure z-index works */
+            z-index: 10;
+        }
 
         /* Fretboard Visualizer Styles */
         .visualizer-container {
@@ -247,6 +255,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            cursor: pointer;
         }
         .note-fixed.in-scale {
             transform: scale(1.1);
@@ -522,7 +531,14 @@
                         const noteFixed = document.createElement('div');
                         noteFixed.className = 'note-fixed';
                         const noteIndex = (openNoteIndex + i + 1) % 12;
-                        noteFixed.textContent = SHARP_NOTES[noteIndex];
+                        const noteName = SHARP_NOTES[noteIndex];
+                        noteFixed.textContent = noteName;
+                        noteFixed.dataset.note = noteName;
+                        noteFixed.addEventListener('click', (e) => {
+                            if (e.currentTarget.classList.contains('in-scale')) {
+                                playAndHighlightNote(noteName, e.currentTarget);
+                            }
+                        });
                         fret.appendChild(noteFixed);
                         stringDiv.appendChild(fret);
                     }
@@ -872,10 +888,10 @@
             };
 
             const highlightNote = (element) => {
-                const originalClasses = Array.from(element.classList);
-                element.className = 'note-circle active-note';
+                const originalClasses = element.className;
+                element.classList.add('active-note');
                 setTimeout(() => {
-                    element.className = originalClasses.join(' ');
+                    element.className = originalClasses;
                 }, 300);
             };
 
